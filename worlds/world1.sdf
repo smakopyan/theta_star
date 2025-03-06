@@ -1,0 +1,5294 @@
+<sdf version='1.9'>
+  <world name='default'>
+    <gravity>0 0 -9.8</gravity>
+    <magnetic_field>6e-06 2.3e-05 -4.2e-05</magnetic_field>
+    <atmosphere type='adiabatic'/>
+    <physics type='ode'>
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+    <scene>
+      <ambient>0.4 0.4 0.4 1</ambient>
+      <background>0.7 0.7 0.7 1</background>
+      <shadows>true</shadows>
+    </scene>
+    <model name='falt_model'>
+      <pose>0.158541 0.170544 0 0 -0 0</pose>
+      <link name='Wall_0'>
+        <pose>-6.69195 4.70123 0 0 0 -3.14002</pose>
+        <visual name='Wall_0_Visual_0'>
+          <pose>-2.28279 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.24903 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_0_Collision_0'>
+          <geometry>
+            <box>
+              <size>1.24903 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>-2.28279 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_0_Visual_1'>
+          <pose>0.624515 0 0.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>4.56558 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_0_Collision_1'>
+          <geometry>
+            <box>
+              <size>4.56558 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>0.624515 0 0.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_0_Visual_2'>
+          <pose>2.36563 0 1.5 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.08335 0.15 2</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_0_Collision_2'>
+          <geometry>
+            <box>
+              <size>1.08335 0.15 2</size>
+            </box>
+          </geometry>
+          <pose>2.36563 0 1.5 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_0_Visual_3'>
+          <pose>0.082842 0 2.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>3.48223 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_0_Collision_3'>
+          <geometry>
+            <box>
+              <size>3.48223 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>0.082842 0 2.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_1'>
+        <collision name='Wall_1_Collision'>
+          <geometry>
+            <box>
+              <size>14.1027 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_1_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>14.1027 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <pose>-9.48979 -2.27951 0 0 0 -1.56586</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_11'>
+        <collision name='Wall_11_Collision'>
+          <geometry>
+            <box>
+              <size>11.0601 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_11_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>11.0601 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <pose>-3.82616 2.00348 0 0 0 -1.56667</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_13'>
+        <pose>-6.62756 -3.45819 0 0 -0 0.003469</pose>
+        <visual name='Wall_13_Visual_0'>
+          <pose>-1.34562 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>3.01762 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_13_Collision_0'>
+          <geometry>
+            <box>
+              <size>3.01762 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>-1.34562 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_13_Visual_1'>
+          <pose>1.95881 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.79124 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_13_Collision_1'>
+          <geometry>
+            <box>
+              <size>1.79124 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>1.95881 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_13_Visual_2'>
+          <pose>0.613187 0 2.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_13_Collision_2'>
+          <geometry>
+            <box>
+              <size>0.9 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>0.613187 0 2.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_15'>
+        <pose>-6.57645 -5.93551 0 0 0 -3.1355</pose>
+        <visual name='Wall_15_Visual_0'>
+          <pose>-2.77612 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.270004 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_15_Collision_0'>
+          <geometry>
+            <box>
+              <size>0.270004 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>-2.77612 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_15_Visual_1'>
+          <pose>0.585002 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>4.65224 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_15_Collision_1'>
+          <geometry>
+            <box>
+              <size>4.65224 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0.585002 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_15_Visual_2'>
+          <pose>-2.19112 0 2.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_15_Collision_2'>
+          <geometry>
+            <box>
+              <size>0.9 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>-2.19112 0 2.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_17'>
+        <pose>2.82289 -2.98794 0 0 -0 0.000658</pose>
+        <visual name='Wall_17_Visual_0'>
+          <pose>-5.3418 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>2.60051 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_17_Collision_0'>
+          <geometry>
+            <box>
+              <size>2.60051 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>-5.3418 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_17_Visual_1'>
+          <pose>-1.10383 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>4.07544 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_17_Collision_1'>
+          <geometry>
+            <box>
+              <size>4.07544 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>-1.10383 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_17_Visual_2'>
+          <pose>4.23797 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>4.80816 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_17_Collision_2'>
+          <geometry>
+            <box>
+              <size>4.80816 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>4.23797 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_17_Visual_3'>
+          <pose>-3.59155 0 2.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_17_Collision_3'>
+          <geometry>
+            <box>
+              <size>0.9 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>-3.59155 0 2.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_17_Visual_4'>
+          <pose>1.38389 0 2.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_17_Collision_4'>
+          <geometry>
+            <box>
+              <size>0.9 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>1.38389 0 2.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_19'>
+        <pose>6.54523 -4.40598 0 0 0 -1.5646</pose>
+        <visual name='Wall_19_Visual_0'>
+          <pose>-0.842287 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.25832 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_19_Collision_0'>
+          <geometry>
+            <box>
+              <size>1.25832 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>-0.842287 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_19_Visual_1'>
+          <pose>1.07916 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.784573 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_19_Collision_1'>
+          <geometry>
+            <box>
+              <size>0.784573 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>1.07916 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_19_Visual_2'>
+          <pose>0.236871 0 2.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_19_Collision_2'>
+          <geometry>
+            <box>
+              <size>0.9 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>0.236871 0 2.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_2'>
+        <collision name='Wall_2_Collision'>
+          <geometry>
+            <box>
+              <size>5.90106 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_2_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>5.90106 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <pose>-6.5798 -9.25394 0 0 -0 0.000644</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_21'>
+        <collision name='Wall_21_Collision'>
+          <geometry>
+            <box>
+              <size>0.87631 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_21_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.87631 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <pose>2.93962 -5.4306 0 0 0 -1.5708</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_23'>
+        <collision name='Wall_23_Collision'>
+          <geometry>
+            <box>
+              <size>10.4557 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_23_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>10.4557 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <pose>3.17389 2.30902 0 0 0 -1.57071</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_25'>
+        <pose>6.3156 5.11522 0 0 0 -0.006369</pose>
+        <visual name='Wall_25_Visual_0'>
+          <pose>-2.06943 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>2.25581 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_25_Collision_0'>
+          <geometry>
+            <box>
+              <size>2.25581 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>-2.06943 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_25_Visual_1'>
+          <pose>1.5779 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>3.23886 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_25_Collision_1'>
+          <geometry>
+            <box>
+              <size>3.23886 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>1.5779 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_25_Visual_2'>
+          <pose>-0.491526 0 2.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_25_Collision_2'>
+          <geometry>
+            <box>
+              <size>0.9 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>-0.491526 0 2.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_27'>
+        <collision name='Wall_27_Collision'>
+          <geometry>
+            <box>
+              <size>2.09791 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_27_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>2.09791 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <pose>-3.31749 8.39249 0 0 -0 1.03011</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_29'>
+        <collision name='Wall_29_Collision'>
+          <geometry>
+            <box>
+              <size>2.15321 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_29_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>2.15321 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <pose>2.71338 8.35305 0 0 0 -1.05987</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_3'>
+        <collision name='Wall_3_Collision'>
+          <geometry>
+            <box>
+              <size>3.48434 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_3_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>3.48434 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <pose>-3.70427 -7.58493 0 0 -0 1.5708</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_4'>
+        <pose>2.85733 -5.88717 0 0 -0 0.004662</pose>
+        <visual name='Wall_4_Visual_0'>
+          <pose>-5.32571 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>2.62193 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_4_Collision_0'>
+          <geometry>
+            <box>
+              <size>2.62193 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>-5.32571 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_4_Visual_1'>
+          <pose>1.89571 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>9.48194 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_4_Collision_1'>
+          <geometry>
+            <box>
+              <size>9.48194 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>1.89571 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_4_Visual_2'>
+          <pose>-3.43 0 2.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>1.16949 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_4_Collision_2'>
+          <geometry>
+            <box>
+              <size>1.16949 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>-3.43 0 2.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_5'>
+        <collision name='Wall_5_Collision'>
+          <geometry>
+            <box>
+              <size>13.4349 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_5_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>13.4349 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <pose>9.47148 0.785643 0 0 -0 1.56289</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_6'>
+        <pose>6.40685 7.4277 0 0 0 -3.14154</pose>
+        <visual name='Wall_6_Visual_0'>
+          <pose>-2.70911 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.96614 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_6_Collision_0'>
+          <geometry>
+            <box>
+              <size>0.96614 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>-2.70911 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_6_Visual_1'>
+          <pose>0.48307 0 0.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>5.41822 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_6_Collision_1'>
+          <geometry>
+            <box>
+              <size>5.41822 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>0.48307 0 0.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_6_Visual_2'>
+          <pose>2.81013 0 1.5 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.764108 0.15 2</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_6_Collision_2'>
+          <geometry>
+            <box>
+              <size>0.764108 0.15 2</size>
+            </box>
+          </geometry>
+          <pose>2.81013 0 1.5 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_6_Visual_3'>
+          <pose>0.101016 0 2.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>4.65411 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_6_Collision_3'>
+          <geometry>
+            <box>
+              <size>4.65411 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>0.101016 0 2.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <link name='Wall_9'>
+        <pose>-0.296192 9.25453 0 0 -0 3.14095</pose>
+        <visual name='Wall_9_Visual_0'>
+          <pose>-2.24984 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.602381 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_9_Collision_0'>
+          <geometry>
+            <box>
+              <size>0.602381 0.15 2.5</size>
+            </box>
+          </geometry>
+          <pose>-2.24984 0 1.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_9_Visual_1'>
+          <pose>0.30119 0 0.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>4.49969 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_9_Collision_1'>
+          <geometry>
+            <box>
+              <size>4.49969 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>0.30119 0 0.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_9_Visual_2'>
+          <pose>2.16487 0 1.5 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.772335 0.15 2</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_9_Collision_2'>
+          <geometry>
+            <box>
+              <size>0.772335 0.15 2</size>
+            </box>
+          </geometry>
+          <pose>2.16487 0 1.5 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='Wall_9_Visual_3'>
+          <pose>-0.084977 0 2.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>3.72735 0.15 0.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Grey</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <collision name='Wall_9_Collision_3'>
+          <geometry>
+            <box>
+              <size>3.72735 0.15 0.5</size>
+            </box>
+          </geometry>
+          <pose>-0.084977 0 2.25 0 -0 0</pose>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <static>true</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='ground_plane'>
+      <static>true</static>
+      <link name='link'>
+        <collision name='collision'>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>100</mu>
+                <mu2>50</mu2>
+              </ode>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='visual'>
+          <cast_shadows>false</cast_shadows>
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>100 100</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.3 0.3 0.3 1</ambient>
+            <diffuse>0.7 0.7 0.7 1</diffuse>
+            <specular>0.01 0.01 0.01 1</specular>
+          </material>
+        </visual>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>2.34728 -8.28197 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Bed'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/bed/1/meshes/bed.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/Bed_Albedo.png</albedo_map>
+                <normal_map>materials/textures/Bed_Normal.png</normal_map>
+                <roughness_map>materials/textures/Bed_Roughness.png</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>0.0 1.16967 0.388813 0.0 0.0 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.042544 1.52334 0.777627</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>0.0 -0.0264773 0.143861 0.0 0.0 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>2.35526 1.55381 0.287722</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>-0.00401034 0.897211 0.481077 1.5708 0.456787 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.60728 0.471611 1.48256</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>0.123479 0.36017 0.264194 1.5708 -0.125019 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.60728 0.471611 1.99479</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>0.163765 -0.521168 0.276162 0.0 0.0 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>1.3896 2.04844 0.399703</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-7.09115 1.14325 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='BedsideTableCart'>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bedsidetablecart/3/files/meshes/BedsideTableCart.glb</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bedsidetablecart/3/files/meshes/BedsideTableCart.glb</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-7.06339 1.4383 0 0 -0 0</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='BedsideTableCart_0'>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bedsidetablecart/3/files/meshes/BedsideTableCart.glb</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bedsidetablecart/3/files/meshes/BedsideTableCart.glb</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-5.60936 2.04652 0 0 -0 0</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Fridge'>
+      <static>true</static>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/fridge/2/files/meshes/Fridge.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/fridge/2/files/meshes/Fridge_Col.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>9.37599 3.75557 0.018563 0.050703 -0.063122 -1.6198</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='DiningTable'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual_wood'>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/dining table/1/meshes/diningtable.dae</uri>
+              <submesh>
+                <name>Wood</name>
+                <center>false</center>
+              </submesh>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/Wood_Albedo.png</albedo_map>
+                <normal_map>materials/textures/Wood_Normal.png</normal_map>
+                <roughness_map>materials/textures/Wood_Roughness.png</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <visual name='visual_black'>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/dining table/1/meshes/diningtable.dae</uri>
+              <submesh>
+                <name>Black</name>
+                <center>false</center>
+              </submesh>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <roughness>0.5</roughness>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box011'>
+          <pose>0.0 0.302465 0.49338 -1.25664 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.058 0.091 1.10422</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box010'>
+          <pose>0.0 -0.302465 0.49338 1.25664 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.058 0.091 1.10422</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box009'>
+          <pose>-0.361336 -0.961929 0.36405 -0.10472 0.10472 -0.010472</pose>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.736144</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box008'>
+          <pose>0.361336 -0.961929 0.36405 -0.10472 -0.10472 0.010472</pose>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.736144</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box007'>
+          <pose>0.361336 0.961929 0.36405 0.10472 -0.10472 -0.010472</pose>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.736144</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>-0.361336 0.961929 0.36405 0.10472 0.10472 0.010472</pose>
+          <geometry>
+            <box>
+              <size>0.1 0.1 0.736144</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>0.0 -0.97917 0.236278 0.0 0.0 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.084456 0.884815 0.099045</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>0.0 0.97917 0.236278 0.0 0.0 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.084456 0.884815 0.099045</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.0 0.0 0.320813 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.0612 2.15808 0.1065</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>0.0 0.0 0.664356 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.68 1.91 0.1065</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box001'>
+          <pose>0.0 0.0 0.725 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>1 2.35 0.03</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>5.62668 0.776263 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='BedsideTableCart_1'>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bedsidetablecart/3/files/meshes/BedsideTableCart.glb</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bedsidetablecart/3/files/meshes/BedsideTableCart.glb</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-5.80702 1.99446 0 0 -0 0</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='CoffeeTable'>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/coffeetable/2/files/meshes/CoffeeTable.obj</uri>
+              <scale>0.00817 0.00817 0.00817</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/coffeetable/2/files/meshes/CoffeeTable.obj</uri>
+              <scale>0.00817 0.00817 0.00817</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>8.30336 6.46798 0 0 -0 0</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Toilet'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/standard toilet/1/meshes/toilet.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/Toilet_Albedo.png</albedo_map>
+                <normal_map>materials/textures/Toilet_Normal.png</normal_map>
+                <roughness_map>materials/textures/Toilet_Roughness.png</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>0.0 1.16967 0.388813 0.0 0.0 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.042544 1.52334 0.777627</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>0.0 -0.0264773 0.143861 0.0 0.0 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>2.35526 1.55381 0.287722</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>-0.00401034 0.897211 0.481077 1.5708 0.456787 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.60728 0.471611 1.48256</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>0.123479 0.36017 0.264194 1.5708 -0.125019 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.60728 0.471611 1.99479</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>0.163765 -0.521168 0.276162 0.0 0.0 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>1.3896 2.04844 0.399703</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>9.36119 -3.0885 0.01414 0 0 -0.922718</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Bathtub'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/bathtub/1/meshes/bathtub.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/Bathtub_Albedo.jpg</albedo_map>
+                <normal_map>materials/textures/Bathtub_Normal.png</normal_map>
+                <roughness_map>materials/textures/Bathtub_Roughness.jpg</roughness_map>
+                <metalness_map>materials/textures/Bathtub_Metalness.jpg</metalness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box003'>
+          <pose>0.0 0.0 0.341135 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>1.83106 0.767396 0.426196</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>0.100994 0.424134 0.359413 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.20341 0.089853 0.718826</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box001'>
+          <pose>-0.0080871 -0.00691932 0.077711 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>1.20452 0.471123 0.155422</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-7.79947 -6.59167 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='KitchenCountertop'>
+      <link name='link'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/kitchencountertop/3/files/meshes/KitchenCountertop.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/kitchencountertop/3/files/meshes/KitchenCountertop.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>9.29059 1.66371 0 0 -0 3.12623</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='DiningChair'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/dining chair/1/meshes/diningchair.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/DiningChair_Albedo.jpg</albedo_map>
+                <normal_map>materials/textures/DiningChair_Normal.jpg</normal_map>
+                <roughness_map>materials/textures/DiningChair_Roughness.jpg</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>-0.146568 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>-0.178948 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.0 -0.000563771 0.372588 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.3996 0.4468 0.148292</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>0.0 0.246451 0.700029 -0.156988 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.35964 0.0273 0.52543</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>0.17895 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>0.14657 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>5.579 2.16919 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='DiningChair_0'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/dining chair/1/meshes/diningchair.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/DiningChair_Albedo.jpg</albedo_map>
+                <normal_map>materials/textures/DiningChair_Normal.jpg</normal_map>
+                <roughness_map>materials/textures/DiningChair_Roughness.jpg</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>-0.146568 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>-0.178948 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.0 -0.000563771 0.372588 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.3996 0.4468 0.148292</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>0.0 0.246451 0.700029 -0.156988 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.35964 0.0273 0.52543</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>0.17895 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>0.14657 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>4.8808 1.54069 0 0 -0 1.66463</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='DiningChair_1'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/dining chair/1/meshes/diningchair.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/DiningChair_Albedo.jpg</albedo_map>
+                <normal_map>materials/textures/DiningChair_Normal.jpg</normal_map>
+                <roughness_map>materials/textures/DiningChair_Roughness.jpg</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>-0.146568 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>-0.178948 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.0 -0.000563771 0.372588 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.3996 0.4468 0.148292</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>0.0 0.246451 0.700029 -0.156988 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.35964 0.0273 0.52543</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>0.17895 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>0.14657 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>5.02017 0.765357 0 0 -0 1.61377</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='DiningChair_2'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/dining chair/1/meshes/diningchair.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/DiningChair_Albedo.jpg</albedo_map>
+                <normal_map>materials/textures/DiningChair_Normal.jpg</normal_map>
+                <roughness_map>materials/textures/DiningChair_Roughness.jpg</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>-0.146568 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>-0.178948 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.0 -0.000563771 0.372588 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.3996 0.4468 0.148292</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>0.0 0.246451 0.700029 -0.156988 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.35964 0.0273 0.52543</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>0.17895 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>0.14657 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>5.03295 -0.003371 0 0 -0 1.59729</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='DiningChair_3'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/dining chair/1/meshes/diningchair.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/DiningChair_Albedo.jpg</albedo_map>
+                <normal_map>materials/textures/DiningChair_Normal.jpg</normal_map>
+                <roughness_map>materials/textures/DiningChair_Roughness.jpg</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>-0.146568 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>-0.178948 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.0 -0.000563771 0.372588 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.3996 0.4468 0.148292</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>0.0 0.246451 0.700029 -0.156988 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.35964 0.0273 0.52543</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>0.17895 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>0.14657 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>5.66381 -0.560635 -0.004124 0.019367 -0.000229 -3.12977</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='DiningChair_4'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/dining chair/1/meshes/diningchair.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/DiningChair_Albedo.jpg</albedo_map>
+                <normal_map>materials/textures/DiningChair_Normal.jpg</normal_map>
+                <roughness_map>materials/textures/DiningChair_Roughness.jpg</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>-0.146568 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>-0.178948 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.0 -0.000563771 0.372588 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.3996 0.4468 0.148292</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>0.0 0.246451 0.700029 -0.156988 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.35964 0.0273 0.52543</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>0.17895 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>0.14657 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>6.39139 1.59495 0 0 0 -1.56907</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='DiningChair_5'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/dining chair/1/meshes/diningchair.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/DiningChair_Albedo.jpg</albedo_map>
+                <normal_map>materials/textures/DiningChair_Normal.jpg</normal_map>
+                <roughness_map>materials/textures/DiningChair_Roughness.jpg</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>-0.146568 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>-0.178948 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.0 -0.000563771 0.372588 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.3996 0.4468 0.148292</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>0.0 0.246451 0.700029 -0.156988 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.35964 0.0273 0.52543</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>0.17895 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>0.14657 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>6.38387 0.588039 0 0 0 -1.55215</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='DiningChair_6'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/dining chair/1/meshes/diningchair.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/DiningChair_Albedo.jpg</albedo_map>
+                <normal_map>materials/textures/DiningChair_Normal.jpg</normal_map>
+                <roughness_map>materials/textures/DiningChair_Roughness.jpg</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>-0.146568 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>-0.178948 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.0 -0.000563771 0.372588 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.3996 0.4468 0.148292</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>0.0 0.246451 0.700029 -0.156988 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.35964 0.0273 0.52543</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>0.17895 -0.198708 0.217889 0.0415208 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>0.14657 0.202837 0.217947 -0.0345933 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.04 0.04 0.436154</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>6.34957 -0.177388 0 0 0 -1.58173</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Armchair'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/armchair/2/meshes/armchair.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/Armchair_Albedo.png</albedo_map>
+                <normal_map>materials/textures/Armchair_Normal.png</normal_map>
+                <roughness_map>materials/textures/Armchair_Roughness.png</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>0.0 0.261949 0.460133 -0.384212 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.631431 0.069924 0.445858</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.0 -0.0236233 0.268079 1.47249 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.631431 0.130198 0.491702</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>-0.29402 0.291571 0.221926 -3.0538 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.031572 0.038458 0.445858</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>-0.29402 -0.242078 0.24347 2.87267 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.031572 0.038458 0.50382</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>-0.312721 0.0406857 0.462906 1.48645 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.075456 0.038458 0.67008</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box007'>
+          <pose>0.29402 0.291571 0.221926 -3.0538 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.031572 0.038458 0.445858</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box008'>
+          <pose>0.29402 -0.242078 0.24347 2.87267 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.031572 0.038458 0.50382</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box009'>
+          <pose>0.31272 0.0406857 0.462906 1.48645 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.075456 0.038458 0.67008</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box010'>
+          <pose>-0.000554919 0.305595 0.439838 -0.0833634 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.591172 0.072043 0.023308</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>9.12071 7.018 0 0 0 -0.791773</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Armchair_0'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/armchair/2/meshes/armchair.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/Armchair_Albedo.png</albedo_map>
+                <normal_map>materials/textures/Armchair_Normal.png</normal_map>
+                <roughness_map>materials/textures/Armchair_Roughness.png</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>0.0 0.261949 0.460133 -0.384212 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.631431 0.069924 0.445858</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.0 -0.0236233 0.268079 1.47249 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.631431 0.130198 0.491702</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>-0.29402 0.291571 0.221926 -3.0538 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.031572 0.038458 0.445858</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>-0.29402 -0.242078 0.24347 2.87267 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.031572 0.038458 0.50382</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>-0.312721 0.0406857 0.462906 1.48645 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.075456 0.038458 0.67008</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box007'>
+          <pose>0.29402 0.291571 0.221926 -3.0538 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.031572 0.038458 0.445858</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box008'>
+          <pose>0.29402 -0.242078 0.24347 2.87267 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.031572 0.038458 0.50382</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box009'>
+          <pose>0.31272 0.0406857 0.462906 1.48645 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.075456 0.038458 0.67008</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box010'>
+          <pose>-0.000554919 0.305595 0.439838 -0.0833634 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.591172 0.072043 0.023308</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>9.0335 5.78614 0 0 0 -2.56583</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='TrashBin'>
+      <static>true</static>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/trashbin/2/files/meshes/TrashBin.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/trashbin/2/files/meshes/TrashBin.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>9.3636 3.18804 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='TrashBin_0'>
+      <static>true</static>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/trashbin/2/files/meshes/TrashBin.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/trashbin/2/files/meshes/TrashBin.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>9.41912 -3.83593 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='BedsideTable2'>
+      <static>true</static>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bedsidetable2/2/files/meshes/BedsideTable2.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bedsidetable2/2/files/meshes/BedsideTable2_Col.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-8.30992 1.9473 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='BedsideTable2_0'>
+      <static>true</static>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bedsidetable2/2/files/meshes/BedsideTable2.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bedsidetable2/2/files/meshes/BedsideTable2_Col.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-5.55244 1.88068 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Bookshelf'>
+      <static>true</static>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <pose>0 0 0 0 -0 0</pose>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <collision name='back'>
+          <pose>0 0.005 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.01 1.2</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='visual1'>
+          <pose>0 0.005 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.01 1.2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Wood</name>
+            </script>
+            <pbr>
+              <metal>
+                <albedo_map>https://fuel.gazebosim.org/1.0/openrobotics/models/bookshelf/4/files/bookshelf_diffuse.jpg</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='left_side'>
+          <pose>0.45 -0.195 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.02 0.4 1.2</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='visual2'>
+          <pose>0.45 -0.195 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.02 0.4 1.2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Wood</name>
+            </script>
+            <pbr>
+              <metal>
+                <albedo_map>https://fuel.gazebosim.org/1.0/openrobotics/models/bookshelf/4/files/bookshelf_diffuse.jpg</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='right_side'>
+          <pose>-0.45 -0.195 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.02 0.4 1.2</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='visual3'>
+          <pose>-0.45 -0.195 0.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.02 0.4 1.2</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Wood</name>
+            </script>
+            <pbr>
+              <metal>
+                <albedo_map>https://fuel.gazebosim.org/1.0/openrobotics/models/bookshelf/4/files/bookshelf_diffuse.jpg</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='bottom'>
+          <pose>0 -0.195 0.03 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.88 0.4 0.06</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='visual4'>
+          <pose>0 -0.195 0.03 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.88 0.4 0.06</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Wood</name>
+            </script>
+            <pbr>
+              <metal>
+                <albedo_map>https://fuel.gazebosim.org/1.0/openrobotics/models/bookshelf/4/files/bookshelf_diffuse.jpg</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='top'>
+          <pose>0 -0.195 1.19 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.88 0.4 0.02</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='visual5'>
+          <pose>0 -0.195 1.19 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.88 0.4 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Wood</name>
+            </script>
+            <pbr>
+              <metal>
+                <albedo_map>https://fuel.gazebosim.org/1.0/openrobotics/models/bookshelf/4/files/bookshelf_diffuse.jpg</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='low_shelf'>
+          <pose>0 -0.195 0.43 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.88 0.4 0.02</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='visual6'>
+          <pose>0 -0.195 0.43 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.88 0.4 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Wood</name>
+            </script>
+            <pbr>
+              <metal>
+                <albedo_map>https://fuel.gazebosim.org/1.0/openrobotics/models/bookshelf/4/files/bookshelf_diffuse.jpg</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='high_shelf'>
+          <pose>0 -0.195 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.88 0.4 0.02</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='visual7'>
+          <pose>0 -0.195 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.88 0.4 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Wood</name>
+            </script>
+            <pbr>
+              <metal>
+                <albedo_map>https://fuel.gazebosim.org/1.0/openrobotics/models/bookshelf/4/files/bookshelf_diffuse.jpg</albedo_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <pose>0 0 0 0 -0 0</pose>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>2.74861 1.52842 0 0 0 -1.56089</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='TVStand'>
+      <static>true</static>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/tvstand/2/files/meshes/TVStand.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/tvstand/2/files/meshes/TVStand_Col.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-3.08341 3.47349 0 0 -0 1.56397</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Oven'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual_oven'>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/oven/1/meshes/oven.dae</uri>
+              <submesh>
+                <name>Oven</name>
+                <center>false</center>
+              </submesh>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/Oven_Albedo.png</albedo_map>
+                <normal_map>materials/textures/Oven_Normal.png</normal_map>
+                <roughness_map>materials/textures/Oven_Roughness.png</roughness_map>
+                <metalness_map>materials/textures/Oven_Metalness.png</metalness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <visual name='visual_glass'>
+          <geometry>
+            <mesh>
+              <scale>1 1 1</scale>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/oven/1/meshes/oven.dae</uri>
+              <submesh>
+                <name>Glass</name>
+                <center>false</center>
+              </submesh>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/Glass.png</albedo_map>
+                <roughness>0.1</roughness>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>-0.000304252 -1.66893e-06 0.517103 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.691523 0.96649 1.03421</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>9.42272 -0.168826 0 0 -0 3.12713</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='platypus'>
+      <link name='link'>
+        <inertial>
+          <pose>0 0 -0.3 0 -0 0</pose>
+          <mass>20</mass>
+          <inertia>
+            <ixx>0.24682999999999999</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.98016000000000003</iyy>
+            <iyz>0</iyz>
+            <izz>1.1416599999999999</izz>
+          </inertia>
+        </inertial>
+        <collision name='platypus_collision'>
+          <pose>0.02 0 0.05 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.75 0.35 0.16</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <visual name='platypus_visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/platypus/3/meshes/platypus.dae</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <pose>0 0 0 0 -0 0</pose>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-0.352498 4.60427 0 0 -0 0</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='WhiteCabinet'>
+      <static>true</static>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/whitecabinet/2/files/meshes/WhiteCabinet.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/whitecabinet/2/files/meshes/WhiteCabinet.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>8.56939 -5.2188 0 0 -0 3.13847</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='BathroomSink'>
+      <static>true</static>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bathroomsink/2/files/meshes/BathroomSink.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bathroomsink/2/files/meshes/BathroomSink_Col.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>8.56252 -5.34826 1.16512 0 -0 3.12533</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='MiniSofa'>
+      <link name='body'>
+        <pose>0 0 0 0 0 -1.5708</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/minisofa/3/files/meshes/minisofa.obj</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/minisofa/3/files/meshes/minisofa.obj</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-8.21379 -1.74622 0 0 -0 3.13494</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='MiniSofa_0'>
+      <link name='body'>
+        <pose>0 0 0 0 0 -1.5708</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/minisofa/3/files/meshes/minisofa.obj</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/minisofa/3/files/meshes/minisofa.obj</uri>
+              <scale>1 1 1</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-8.2787 -2.71136 0 0 -0 3.10693</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='BedTable'>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bedtable/2/files/meshes/BedTable.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/bedtable/2/files/meshes/BedTable_Col.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-7.45215 -2.49797 0 0 0 -1.6075</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Desk'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/office desk/1/meshes/desk.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/Desk_Albedo.png</albedo_map>
+                <normal_map>materials/textures/Desk_Normal.png</normal_map>
+                <roughness_map>materials/textures/Desk_Roughness.png</roughness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>0.0 0.0 0.750208 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.8325 2.24977 0.033646</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>0.331174 -1.05803 0.372493 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.035625 0.035625 0.744987</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.331174 1.05803 0.372493 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.035625 0.035625 0.744987</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>-0.331174 1.05803 0.372493 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.035625 0.035625 0.744987</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>-0.331174 -1.05803 0.372493 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.035625 0.035625 0.744987</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>0.000344962 -1.05803 0.485212 0.0 1.5708 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.035625 0.035625 0.663038</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box007'>
+          <pose>0.000344962 1.05803 0.485212 0.0 1.5708 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.035625 0.035625 0.663038</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box008'>
+          <pose>0.0 -0.00048697 0.485212 -1.5708 1.5708 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.035625 0.035625 2.11509</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box009'>
+          <pose>0.331174 -0.000626326 0.715061 -1.5708 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.035625 0.035625 2.11481</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box010'>
+          <pose>-0.331174 -0.000626326 0.715061 -1.5708 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.035625 0.035625 2.11481</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box011'>
+          <pose>0.0726977 -0.102337 0.768498 0.0 0.0872665 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.129877 0.447191 0.05018</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box012'>
+          <pose>-0.222452 -0.0605589 0.979005 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.029518 0.63758 0.470188</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box013'>
+          <pose>0.0989945 0.276996 0.782739 0.0 0.0 -0.174533</pose>
+          <geometry>
+            <box>
+              <size>0.116594 0.05708 0.036897</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-2.55444 -0.859798 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='OfficeChair'>
+      <static>true</static>
+      <link name='base_link'>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>file:///home/anastasiia/.ignition/fuel/fuel.gazebosim.org/openrobotics/models/office chair/1/meshes/officechair.dae</uri>
+            </mesh>
+          </geometry>
+          <material>
+            <diffuse>1 1 1 1</diffuse>
+            <specular>1 1 1 1</specular>
+            <pbr>
+              <metal>
+                <albedo_map>materials/textures/OfficeChair_Albedo.png</albedo_map>
+                <normal_map>materials/textures/OfficeChair_Normal.png</normal_map>
+                <roughness_map>materials/textures/OfficeChair_Roughness.png</roughness_map>
+                <metalness_map>materials/textures/OfficeChair_Metalness.png</metalness_map>
+              </metal>
+            </pbr>
+          </material>
+        </visual>
+        <collision name='Box001'>
+          <pose>0.0 0.03962 0.46685 0.0872665 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.511249 0.578359 0.108987</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box002'>
+          <pose>0.0 -0.200278 0.766385 -1.48353 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.511249 0.665113 0.108987</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Cylinder001'>
+          <pose>0.0 0.0 0.239577 0.0 0.0 0.0</pose>
+          <geometry>
+            <cylinder>
+              <length>0.39559100000000003</length>
+              <radius>0.0321281</radius>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Cylinder002'>
+          <pose>0.406934 -0.124695 0.037183 1.5708 0.0 -0.0671651</pose>
+          <geometry>
+            <cylinder>
+              <length>0.058403099999999999</length>
+              <radius>0.0379998</radius>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Cylinder003'>
+          <pose>0.243918 0.348604 0.037183 1.5708 0.0 1.17814</pose>
+          <geometry>
+            <cylinder>
+              <length>0.058403099999999999</length>
+              <radius>0.0379998</radius>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Cylinder004'>
+          <pose>-0.255977 0.339873 0.037183 1.5708 0.0 2.44229</pose>
+          <geometry>
+            <cylinder>
+              <length>0.058403099999999999</length>
+              <radius>0.0379998</radius>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Cylinder005'>
+          <pose>-0.40242 -0.13893 0.037183 1.5708 0.0 -2.5742</pose>
+          <geometry>
+            <cylinder>
+              <length>0.058403099999999999</length>
+              <radius>0.0379998</radius>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Cylinder006'>
+          <pose>0.00739516 -0.425689 0.037183 1.5708 0.0 1.8213</pose>
+          <geometry>
+            <cylinder>
+              <length>0.058403099999999999</length>
+              <radius>0.0379998</radius>
+            </cylinder>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box003'>
+          <pose>0.0 -0.208233 0.12911 0.0699253 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.050443 0.404478 0.059061</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box004'>
+          <pose>-0.198041 -0.0643475 0.12911 0.0699253 0.0 -1.25664</pose>
+          <geometry>
+            <box>
+              <size>0.050443 0.404478 0.059061</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box005'>
+          <pose>-0.122396 0.168464 0.12911 0.0699253 0.0 -2.51327</pose>
+          <geometry>
+            <box>
+              <size>0.050443 0.404478 0.059061</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box006'>
+          <pose>0.122396 0.168464 0.12911 0.0699253 0.0 2.51327</pose>
+          <geometry>
+            <box>
+              <size>0.050443 0.404478 0.059061</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box007'>
+          <pose>0.198041 -0.0643477 0.12911 0.0699253 0.0 1.25664</pose>
+          <geometry>
+            <box>
+              <size>0.050443 0.404478 0.059061</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box008'>
+          <pose>-0.275812 -0.0026205 0.741555 1.5708 0.139626 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.26452 0.043899 0.065929</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box009'>
+          <pose>-0.273179 -0.0180064 0.599892 1.5708 0.139626 -1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.06613 0.280955 0.03692</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box010'>
+          <pose>0.275965 -0.00262052 0.741555 1.5708 -0.139626 1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.26452 0.043899 0.065929</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <collision name='Box011'>
+          <pose>0.27346 -0.0180064 0.599892 1.5708 -0.139626 1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.06613 0.280955 0.03692</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode/>
+            </friction>
+            <bounce/>
+            <contact/>
+          </surface>
+        </collision>
+        <pose>0 0 0 0 -0 0</pose>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-1.48898 -1.29554 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='RecTable'>
+      <static>true</static>
+      <link name='body'>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/rectable/2/files/meshes/RecTable.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/rectable/2/files/meshes/RecTable_Col.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>1.94004 6.51665 0 0 -0 0</pose>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Chair'>
+      <link name='body'>
+        <pose>0 0 0 0 -0 1.5708</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/chair/3/files/meshes/Chair.obj</uri>
+              <scale>0.00817 0.00817 0.00817</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/chair/3/files/meshes/Chair.obj</uri>
+              <scale>0.00817 0.00817 0.00817</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>2.09882 7.4976 0 0 0.181154 -1.80554</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Chair_0'>
+      <link name='body'>
+        <pose>0 0 0 0 -0 1.5708</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/chair/3/files/meshes/Chair.obj</uri>
+              <scale>0.00817 0.00817 0.00817</scale>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/chair/3/files/meshes/Chair.obj</uri>
+              <scale>0.00817 0.00817 0.00817</scale>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>2.26785 5.49568 0 0 -0 1.84003</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <model name='Sofa'>
+      <link name='link'>
+        <pose>0 0 0 0 -0 1.5708</pose>
+        <visual name='visual'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/sofa/3/files/meshes/Sofa.obj</uri>
+            </mesh>
+          </geometry>
+        </visual>
+        <collision name='collision'>
+          <geometry>
+            <mesh>
+              <uri>https://fuel.gazebosim.org/1.0/openrobotics/models/sofa/3/files/meshes/Sofa.obj</uri>
+            </mesh>
+          </geometry>
+        </collision>
+        <inertial>
+          <pose>0 0 0 0 -0 0</pose>
+          <mass>1</mass>
+          <inertia>
+            <ixx>1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>1</iyy>
+            <iyz>0</iyz>
+            <izz>1</izz>
+          </inertia>
+        </inertial>
+        <enable_wind>false</enable_wind>
+      </link>
+      <pose>-2.73099 6.90938 0 0 -0 0</pose>
+      <static>false</static>
+      <self_collide>false</self_collide>
+    </model>
+    <light name='sun' type='directional'>
+      <pose>-13.028 -5.12295 10 0 -0 0</pose>
+      <cast_shadows>true</cast_shadows>
+      <intensity>1</intensity>
+      <direction>-0.5 0.1 -0.9</direction>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation>
+        <range>1000</range>
+        <linear>0.01</linear>
+        <constant>0.90000000000000002</constant>
+        <quadratic>0.001</quadratic>
+      </attenuation>
+      <spot>
+        <inner_angle>0</inner_angle>
+        <outer_angle>0</outer_angle>
+        <falloff>0</falloff>
+      </spot>
+    </light>
+  </world>
+</sdf>
