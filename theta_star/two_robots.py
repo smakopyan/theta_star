@@ -10,7 +10,7 @@ from geometry_msgs.msg import PoseStamped, Twist
 
 lookahead_distance = 0.25
 speed = 0.2
-expansion_size = 5
+expansion_size = 4
 
 class node:
     def __init__(self, parent=None, position=None):
@@ -258,8 +258,8 @@ class Navigation(Node):
         if not self.map_init:
             return
         while True:
-            goal_x = np.random.randint(0, self.width-1)
-            goal_y = np.random.randint(0, self.height-1)
+            goal_x = np.random.randint(0, self.height-1)
+            goal_y = np.random.randint(0, self.width-1)
             if self.grid[goal_x][goal_y] == 0:
                 self.robots[robot_name]['goal'] = (goal_x, goal_y)
                 self.get_logger().info(f"New goal for {robot_name}: {goal_x}, {goal_y}")

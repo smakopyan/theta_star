@@ -28,14 +28,14 @@ def generate_launch_description():
     
     declare_world_name = DeclareLaunchArgument(
         'world',
-        default_value='world1.sdf',  
-        choices=['world1.sdf', 'world2.sdf', 'world3.sdf', 'world4.sdf', 'turtlebot3_world.world']
+        default_value='test.sdf',  
+        choices=['world1.sdf', 'world2.sdf', 'world3.sdf', 'world4.sdf', 'turtlebot3_world.world', 'test.sdf']
     )
     
     declare_map_name = DeclareLaunchArgument(
         'map',
-        default_value='map1.yaml',
-        choices=['map1.yaml', 'map2.yaml', 'map3.yaml', 'map4.yaml', 'turtlebot3_map.yaml']
+        default_value='map_test.yaml',
+        choices=['map1.yaml', 'map2.yaml', 'map3.yaml', 'map4.yaml', 'turtlebot3_map.yaml', 'map_test.yaml']
     )
         
     world_path = PathJoinSubstitution([
@@ -92,7 +92,7 @@ def generate_launch_description():
     ld.add_action(map_server_lifecyle)
 
 
-    spawn_points = [(-1.5, 0.5), (-1.5, -0.5)]
+    spawn_points = [(-1.5, 0.5), (-2.5, -0.5)]
     last_action = None
     remappings = [("/tf", "tf"), ("/tf_static", "tf_static")]
 
