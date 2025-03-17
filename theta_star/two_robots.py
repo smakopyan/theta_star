@@ -6,11 +6,11 @@ from rclpy.qos import QoSProfile
 import math
 from nav_msgs.msg import OccupancyGrid, Odometry
 from geometry_msgs.msg import PoseStamped, Twist
+import time
 
-
-lookahead_distance = 0.25
+lookahead_distance = 0.3
 speed = 0.2
-expansion_size = 4
+expansion_size = 5
 
 class node:
     def __init__(self, parent=None, position=None):
@@ -103,6 +103,7 @@ def pure_pursuit(current_x, current_y, current_heading, path, index):
     global lookahead_distance
     closest_point = None
     v = speed
+    
     for i in range(index, len(path)):
         x = path[i][0]
         y = path[i][1]
@@ -118,10 +119,12 @@ def pure_pursuit(current_x, current_y, current_heading, path, index):
         target_heading = math.atan2(path[-1][1] - current_y, path[-1][0] - current_x)
         desired_steering_angle = target_heading - current_heading
         index = len(path) - 1
+    
     if desired_steering_angle > math.pi:
         desired_steering_angle -= 2 * math.pi
     elif desired_steering_angle < -math.pi:
         desired_steering_angle += 2 * math.pi
+    
     if desired_steering_angle > math.pi / 6 or desired_steering_angle < -math.pi / 6:
         sign = 1 if desired_steering_angle > 0 else -1
         desired_steering_angle = sign * math.pi / 4
@@ -146,7 +149,7 @@ def costmap(data, width, height, resolution):
 class Navigation(Node):
     def __init__(self, namespace0, namespace1):
         super().__init__('Navigation')
-        self.map_init = False
+        self.map_initialized = False
         self.robots = {
             namespace0: {
                 'x': 0.0,
@@ -186,13 +189,18 @@ class Navigation(Node):
                 f'/{namespace}/cmd_vel', 
                 10
             )
-        self.flag = 0
+        #test1.sdf
+        self.goals = [(3.99715, -1.6586), (3.50709, 1.44957), (1.25942, 1.25394), (-0.689823, 2.26387),
+                      (-2.50234, 2.11622), (-1.7666, 0.285539), (-4.07267, 2.43495)]        
+        
+        self.map_init_time = 0.0
         timer_period = 0.01
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.get_logger().info("Wait for targets")
+    
     def create_odom_callback(self, namespace):
         def callback(msg):
-            if not self.map_init:
+            if not self.map_initialized:
                 return
             robot = self.robots[namespace]
             robot['x'] = msg.pose.pose.position.x
@@ -207,8 +215,8 @@ class Navigation(Node):
                                                 msg.pose.pose.position.y)
             expansion_size = 6
             if 0 <= x_grid < self.height and 0 <= y_grid < self.width:
-                other = self.robots['tb0'] if namespace == 'tb1' else self.robots['tb0'] 
-                other['occupations'][x_grid][y_grid] += 1
+                other = self.robots['tb0'] if namespace == 'tb1' else self.robots['tb1'] 
+                other['occupations'][y_grid][x_grid] += 1
                 for i in range(-expansion_size, expansion_size + 1):
                     for j in range(-expansion_size, expansion_size + 1):
                         if i == 0 and j == 0:
@@ -218,55 +226,67 @@ class Navigation(Node):
                         x = np.clip(x, 0, self.height - 1)
                         y = np.clip(y, 0, self.width - 1)
                         if 0 <= x < self.height and 0 <= y < self.width:
-                            other['occupations'][x][y] += 0.6
+                            other['occupations'][y][x] += 0.6
 
             robot['odom_init'] = True
         return callback
     def map_callback(self, msg):
-        if not self.map_init:
+        if not self.map_initialized:
             self.map_resolution = msg.info.resolution
             self.map_origin = [
                 msg.info.origin.position.x,
                 msg.info.origin.position.y
             ]
             self.get_logger().info(f'Map resolution: {self.map_resolution}, Origin: {self.map_origin}')
-            self.grid = costmap(msg.data, msg.info.width, msg.info.height, self.map_resolution)
-            self.grid[self.grid == -1] = 1
-            self.grid[self.grid >= self.map_resolution * 100] = 1
             self.width = msg.info.width
             self.height = msg.info.height
-            self.map_init = True
-
+            self.grid = costmap(msg.data, self.width, self.height, self.map_resolution)
+            self.grid[self.grid == -1] = 1
+            self.grid[self.grid >= self.map_resolution * 100] = 1
+            self.map_initialized = True
+            self.map_init_time = time.time()
+            
             for robot_name in self.robots:
                 self.robots[robot_name]['occupations'] = np.zeros((self.height, self.width), dtype=float)
                 self.robots[robot_name]['penalties'] = np.ones((self.height, self.width), dtype=float) 
+    
     def timer_callback(self):
-        if not self.map_init:
+        if not self.map_initialized or time.time() - self.map_init_time < 90:
+            print(time.time() - self.map_init_time)
             return
         for robot in self.robots.values():
             robot['occupations'] = np.maximum(robot['occupations'] - 0.1, 0)
 
         for robot_name, robot_data in self.robots.items():
-            if not robot_data['odom_init']:
-                continue
+            # if not robot_data['odom_init']:
+            #     continue
             if robot_data['goal'] is None:
                 self.generate_new_goal(robot_name)
                 continue
             
             self.navigate(robot_name)
+            
     def generate_new_goal(self, robot_name):
-        if not self.map_init:
+        if not self.map_initialized:
             return
-        while True:
-            goal_x = np.random.randint(0, self.height-1)
-            goal_y = np.random.randint(0, self.width-1)
-            if self.grid[goal_x][goal_y] == 0:
-                self.robots[robot_name]['goal'] = (goal_x, goal_y)
-                self.get_logger().info(f"New goal for {robot_name}: {goal_x}, {goal_y}")
-                robot = self.robots[robot_name]
-                robot['occupations'] = np.zeros((self.height, self.width))
-                break
-    
+        if self.robots[robot_name]['goal'] == None:
+            self.get_logger().info("Generating new goal..........")
+            ind = np.random.randint(0, len(self.goals))
+            goal_world = self.goals[ind]
+
+            goal = self.world_to_grid(goal_world[0], goal_world[1])
+            other_name = 'tb0' if robot_name == 'tb1' else 'tb1'
+            self.robots[robot_name]['goal'] = goal  
+            self.update_occupations(robot_name)
+
+            self.get_logger().info(f"New goal for {robot_name}: {goal}")
+            robot = self.robots[robot_name]
+            robot['occupations'] = np.zeros((self.height, self.width))
+            
+            if self.robots[robot_name]['goal'] == self.robots[other_name]['goal']:
+                self.robots[robot_name]['goal'] == None
+                self.generate_new_goal(robot_name)
+        
     def update_occupations(self, robot_name):
         other_name = 'tb1' if robot_name == 'tb0' else 'tb0'
         other_pos = self.world_to_grid(
@@ -281,25 +301,22 @@ class Navigation(Node):
                 x = other_pos[0] + dx
                 y = other_pos[1] + dy
                 if 0 <= x < self.height and 0 <= y < self.width:
-                    self.robots[robot_name]['occupations'][x][y] += 1.0
+                    self.robots[robot_name]['occupations'][y][x] += 1.0
     
     def navigate(self, robot_name):
-        if not self.map_init:
+        if not self.map_initialized:
             return
         robot = self.robots[robot_name]
-        start = self.world_to_grid(robot['x'], robot['y'])
+        start = self.world_to_grid(robot['x'], robot['y']) 
         goal = robot['goal']
         
         self.update_occupations(robot_name)
         
-        if start != goal:
-            grid = self.grid
-            grid[start[0]][start[1]] = 0
-        else:
-            robot['goal'] = None
-        
+        grid = self.grid
+        grid[start[1]][start[0]] = 0
+
         path = theta_star(
-            start, goal, grid,
+            (start[1], start[0]), (goal[1], goal[0]), grid,
             robot['occupations'],
             robot['penalties']
         )
@@ -309,8 +326,8 @@ class Navigation(Node):
             robot['goal'] = None
             return
             
-        robot['path'] = [self.grid_to_world(*p) for p in path]
-        
+        robot['path'] = [self.grid_to_world(i[1], i[0]) for i in path]
+
         v, angle, index = pure_pursuit(
             robot['x'], robot['y'], robot['yaw'],
             robot['path'], robot['index']
@@ -323,6 +340,7 @@ class Navigation(Node):
         
         if self.distance_to_goal(robot) < 0.1:
             robot['goal'] = None
+            
     def distance_to_goal(self, robot):
         if not robot['path']:
             return float('inf')
@@ -331,14 +349,14 @@ class Navigation(Node):
             
     def world_to_grid(self, x_world, y_world):
         x_grid = int((x_world - self.map_origin[0]) / self.map_resolution)
-        y_grid = int((y_world - self.map_origin[1]) / self.map_resolution)
-        x_grid = np.clip(x_grid, 0, self.height - 1)
-        y_grid = np.clip(y_grid, 0, self.width - 1)
+        y_grid = int((y_world - self.map_origin[1])/ self.map_resolution)
         return (x_grid, y_grid)
+
     def grid_to_world(self, x_grid, y_grid):
         x_world = x_grid * self.map_resolution + self.map_origin[0]
         y_world = y_grid * self.map_resolution + self.map_origin[1]
         return (x_world, y_world)
+
 
 def main(args=None):
     rclpy.init(args=args)

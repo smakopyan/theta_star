@@ -3,29 +3,28 @@ from rclpy.node import Node
 import numpy as np
 from queue import PriorityQueue
 from rclpy.qos import QoSProfile
-# import scipy.interpolate as si
 import math
 from nav_msgs.msg import OccupancyGrid, Odometry
 from geometry_msgs.msg import PoseStamped, Twist
+import time
+import cv2  
 
-
-lookahead_distance = 0.2  # Дистанция для поиска следующей точки
-speed = 0.2  # Скорость робота
-expansion_size = 5  # Размер расширения стен на карте
+lookahead_distance = 0.3
+speed = 0.2  
+expansion_size = 6
 
 class node:
     def __init__(self, parent=None, position=None):
         self.parent = parent
         self.position = position
-        self.g = 0  # Cost from start to this node
-        self.h = 0  # Heuristic cost from this node to end
-        self.f = 0  # Total cost
-
+        self.g = 0 
+        self.h = 0 
+        self.f = 0 
     def __eq__(self, other):
         return self.position == other.position
 
     def __lt__(self, other):
-        return self.f < other.f  # Compare based on the total cost f
+        return self.f < other.f  
 
 def heuristic(a, b):
     return np.linalg.norm(np.array(a) - np.array(b))
@@ -48,7 +47,7 @@ def theta_star(start, end, grid):
             while current_node:
                 path.append(current_node.position)
                 current_node = current_node.parent
-            return path[::-1]  # Return reversed path
+            return path[::-1]  
 
         neighbors = [(0, 1), (1, 0), (0, -1), (-1, 0), 
                      (1, 1), (1, -1), (-1, 1), (-1, -1)]
@@ -58,13 +57,12 @@ def theta_star(start, end, grid):
                              current_node.position[1] + new_position[1])
 
             if (0 <= node_position[0] < grid.shape[0]) and (0 <= node_position[1] < grid.shape[1]):
-                if grid[node_position[0]][node_position[1]] != 1:  # Check if it's not an obstacle
+                if grid[node_position[0]][node_position[1]] != 1:  
                     neighbor_node = node(current_node, node_position)
 
                     if neighbor_node in closed_list:
                         continue
 
-                    # Calculate costs
                     neighbor_node.g = current_node.g + heuristic(current_node.position, neighbor_node.position)
                     neighbor_node.h = heuristic(neighbor_node.position, end_node.position)
                     neighbor_node.f = neighbor_node.g + neighbor_node.h
@@ -72,40 +70,13 @@ def theta_star(start, end, grid):
                     if add_to_open(open_list, neighbor_node):
                         open_list.put((neighbor_node.f, neighbor_node))
 
-    return None  # Return None if no path is found
+    return None  
 
 def add_to_open(open_list, neighbor):
     for item in open_list.queue:
         if neighbor == item[1] and neighbor.g >= item[1].g:
             return False
     return True
-
-
-# def bspline_planning(array, sn):
-#     try:
-#         array = np.array(array)
-#         x = array[:, 0]
-#         y = array[:, 1]
-#         N = 2
-#         t = range(len(x))
-#         x_tup = si.splrep(t, x, k=N)
-#         y_tup = si.splrep(t, y, k=N)
-
-#         x_list = list(x_tup)
-#         xl = x.tolist()
-#         x_list[1] = xl + [0.0, 0.0, 0.0, 0.0]
-
-#         y_list = list(y_tup)
-#         yl = y.tolist()
-#         y_list[1] = yl + [0.0, 0.0, 0.0, 0.0]
-
-#         ipl_t = np.linspace(0.0, len(x) - 1, sn)
-#         rx = si.splev(ipl_t, x_list)
-#         ry = si.splev(ipl_t, y_list)
-#         path = [(rx[i], ry[i]) for i in range(len(rx))]
-#     except:
-#         path = array
-#     return path
 
 def euler_from_quaternion(x, y, z, w):
         t0 = +2.0 * (w * x + y * z)
@@ -123,10 +94,16 @@ def euler_from_quaternion(x, y, z, w):
      
         return yaw_z
 
+def dynamic_lookahead(current_speed, min_dist=0.3, max_dist=0.8):
+    return min(max(current_speed * 2.0, min_dist), max_dist)
+
+
 def pure_pursuit(current_x, current_y, current_heading, path, index):
-    global lookahead_distance
     closest_point = None
     v = speed
+    global lookahead_distance
+    # lookahead_distance = dynamic_lookahead(v)
+
     for i in range(index, len(path)):
         x = path[i][0]
         y = path[i][1]
@@ -138,18 +115,27 @@ def pure_pursuit(current_x, current_y, current_heading, path, index):
     if closest_point is not None:
         target_heading = math.atan2(closest_point[1] - current_y, closest_point[0] - current_x)
         desired_steering_angle = target_heading - current_heading
+    
     else:
         target_heading = math.atan2(path[-1][1] - current_y, path[-1][0] - current_x)
         desired_steering_angle = target_heading - current_heading
         index = len(path) - 1
+    
     if desired_steering_angle > math.pi:
         desired_steering_angle -= 2 * math.pi
+    
     elif desired_steering_angle < -math.pi:
         desired_steering_angle += 2 * math.pi
+    
     if desired_steering_angle > math.pi / 6 or desired_steering_angle < -math.pi / 6:
         sign = 1 if desired_steering_angle > 0 else -1
         desired_steering_angle = sign * math.pi / 4
         v = 0.0
+    distance_to_goal = math.hypot(current_x - path[-1][0], current_y - path[-1][1])
+    
+    if distance_to_goal < 0.5:
+        max_steering = math.radians(30)  
+        desired_steering_angle = np.clip(desired_steering_angle, -max_steering, max_steering)
     return v, desired_steering_angle, index
 
 def costmap(data, width, height, resolution):
@@ -167,9 +153,6 @@ def costmap(data, width, height, resolution):
     data = data.astype(float) * resolution
     return data
 
-
-
-
 class Navigation(Node):
     def __init__(self):
         super().__init__('Navigation')
@@ -177,85 +160,132 @@ class Navigation(Node):
         self.y = 0.0
         self.yaw = 0.0
         self.odom_initialized = False
+        self.map_initialized = False
+        self.saved = False
+
         self.subscription_map = self.create_subscription(
             OccupancyGrid, 'map', self.map_callback, 10
         )
         self.subscription_odom = self.create_subscription(
             Odometry, '/odom', self.odom_callback, 10
         )
-        # self.subscription_goal = self.create_subscription(
-        #     PoseStamped, '/goal_pose', self.goal_callback, QoSProfile(depth=10)
-        # )
 
         self.publisher_cmd_vel = self.create_publisher(
             Twist, '/cmd_vel', 10
         )
-        self.flag = 0
         timer_period = 0.01
+        self.map_init_time = 0.0
         self.timer = self.create_timer(timer_period, self.timer_callback)
         print("Wait for target for ...")
 
-    # def goal_callback(self, msg):
-    #     self.goal = (msg.pose.position.x, msg.pose.position.y)
-    #     print(f'Target: x:{msg.pose.position.x}, y: {msg.pose.position.y}')
-    #     self.flag += 1
+        #test1.sdf
+        self.goals = [(3.99715, -1.6586), (3.50709, 1.44957), (1.25942, 1.25394), (-0.689823, 2.26387),
+                      (-2.50234, 2.11622), (-1.7666, 0.285539), (-4.07267, 2.43495)]        
+        
+        
+        self.goal = None
+        self.ind = 0
+        self.count = 0
 
+        
     def map_callback(self, msg):
-        if self.flag == 0:
+        if not self.map_initialized:
             self.map_resolution = msg.info.resolution
             self.map_origin = [
                 msg.info.origin.position.x,
                 msg.info.origin.position.y
             ]
-            print(f'Map resolution: {self.map_resolution}, Origin: {self.map_origin}')
-            self.grid = costmap(msg.data, msg.info.width, msg.info.height, self.map_resolution)
-            self.grid[self.grid == -1] = 1
-            self.grid[self.grid >= self.map_resolution * 100] = 1
+            self.get_logger().info(f'Map resolution: {self.map_resolution}, Origin: {self.map_origin}')
             self.width = msg.info.width
             self.height = msg.info.height
-            self.flag += 1
+            self.grid = costmap(msg.data, self.width, self.height, self.map_resolution)
+            self.grid[self.grid == -1] = 1
+            self.grid[self.grid >= self.map_resolution * 100] = 1
+            self.map_initialized = True
+            self.map_init_time = time.time()
     
     def timer_callback(self):
-        if not self.odom_initialized:
-            return 
-        if self.flag == 1:
-            while True:
-                goal_x = np.random.randint(0, self.width-1)
-                goal_y = np.random.randint(0, self.height-1)
-                if  self.grid[goal_x][goal_y] == 0:
-                    self.goal_x = goal_x
-                    self.goal_y = goal_y
-                    self.flag += 1
-                    print(self.goal_x, self.goal_y)
-                    break
-        if self.flag == 2:
-            start = self.world_to_grid(self.x, self.y)
-            # goal = self.world_to_grid(self.goal[0], self.goal[1])
-
-            grid = self.grid
-            grid[start[0]][start[1]] = 0
-
-            path = theta_star((start[0], start[1]), (self.goal_x, self.goal_y), grid)
-            if path is None:
-                print("No path found.")
-                return
+        if not self.map_initialized or time.time() - self.map_init_time < 90:
+            return
+        self.navigate()
+    
+    def generate_goal(self):
+        if self.goal == None:
+            ind = np.random.randint(0, len(self.goals[0]))
+            goal = self.world_to_grid(self.goals[ind][0], self.goals[ind][1])
+        return goal
+    
+    def generate_new_goal(self):
+        while self.ind < len(self.goals):
+            goal_world = self.goals[self.ind]
+            goal_grid = self.world_to_grid(goal_world[0], goal_world[1])
             
-            self.path = [self.grid_to_world(i[0], i[1]) for i in path]
-            pos = self.world_to_grid(self.x, self.y)
-            print(f'Position: x: {pos[0]}, y: {pos[1]}')
-            self.i = 0
+            if self.grid[goal_grid[1]][goal_grid[0]] != 1:
+                print('goal found')
+                return goal_grid
+                
+            print(f"Skipping invalid goal {self.ind}")
+            self.ind += 1
+        
+        print("All goals completed")
+        return None
+        
+    def navigate(self):
+        if not self.map_initialized:
+            return
+        start = self.world_to_grid(self.x, self.y)
+        grid = self.grid.copy()
+        debug_grid = self.grid.copy()
 
+        grid[start[1]][start[0]] = 0
+        
+        if not self.saved:
+            debug_grid[start[1]][start[0]] = 2
+            
+            for i in range(len(self.goals)):
+                goal = self.world_to_grid(self.goals[i][0], self.goals[i][1])
+                debug_grid[goal[1]][goal[0]] = 3 
+            
+            np.savetxt('/home/sa/turtlebot3_ws/src/theta_star/debug/grid.txt', debug_grid.astype(int), fmt='%d')
+            print('grid saved')
+            self.saved = True
+            
+        if self.goal==None:
+            print('generating new goal.....')
+            self.goal = self.generate_new_goal()
+        
+        if self.ind >= len(self.goals):
             twist = Twist()
-            twist.linear.x, twist.angular.z, self.i = pure_pursuit(self.x, self.y, self.yaw, self.path, self.i)
-
-            if abs(self.x - self.path[-1][0]) < 0.05 and abs(self.y - self.path[-1][1]) < 0.05:
-                twist.linear.x = 0.0
-                twist.angular.z = 0.0
-                print("Goal reached.\n")
-                self.flag -= 1
-                print("Waiting for a new goal...")
-
             self.publisher_cmd_vel.publish(twist)
+            return
+    
+        
+        path = theta_star((start[1], start[0]), (self.goal[1], self.goal[0]), grid)
+
+        if path is None:
+            print(f"No path found for.")
+            # self.goal=None
+            return
+
+        self.path = [self.grid_to_world(i[1], i[0]) for i in path]
+        print(f'Position for x: {self.x}, y: {self.y}')
+        self.i = 0
+
+        twist = Twist()
+        twist.linear.x, twist.angular.z, self.i = pure_pursuit(self.x, self.y, self.yaw, self.path, self.i)
+
+        target_angle = math.atan2(self.path[-1][1] - self.y, self.path[-1][0] - self.x)
+        angle_error = abs(self.yaw - target_angle)
+        
+        if (math.hypot(self.x - self.path[-1][0], self.y - self.path[-1][1]) < 0.1 and angle_error < 0.5):
+            twist.linear.x = 0.0
+            twist.angular.z = 0.0
+            print(f"Goal reached.\n")
+            self.ind += 1
+            
+            self.goal = None
+        self.publisher_cmd_vel.publish(twist)
+            
 
     def odom_callback(self, msg):
         self.x = msg.pose.pose.position.x
@@ -266,11 +296,12 @@ class Navigation(Node):
             msg.pose.pose.orientation.z,
             msg.pose.pose.orientation.w
         )
+        self.odom_initialized_time = time.time()
         self.odom_initialized = True
 
     def world_to_grid(self, x_world, y_world):
         x_grid = int((x_world - self.map_origin[0]) / self.map_resolution)
-        y_grid = int((y_world - self.map_origin[1]) / self.map_resolution)
+        y_grid = int((y_world - self.map_origin[1])/ self.map_resolution)
         return (x_grid, y_grid)
 
     def grid_to_world(self, x_grid, y_grid):
