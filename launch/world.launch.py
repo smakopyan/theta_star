@@ -34,8 +34,8 @@ def generate_launch_description():
     
     declare_map_name = DeclareLaunchArgument(
         'map',
-        default_value='test.yaml',
-        choices=['map1.yaml', 'map2.yaml', 'map3.yaml', 'map4.yaml', 'turtlebot3_map.yaml', 'map_test.yaml', 'test.yaml']
+        default_value='test1.yaml',
+        choices=['map1.yaml', 'map2.yaml', 'map3.yaml', 'map4.yaml', 'turtlebot3_map.yaml', 'map_test.yaml', 'test.yaml', 'test1.yaml']
     )
         
     world_path = PathJoinSubstitution([

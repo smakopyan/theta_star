@@ -19,8 +19,8 @@ def generate_launch_description():
     world = os.path.join(
         get_package_share_directory('theta_star'),
         'worlds',
-        # 'world2.sdf'
-        'test1.sdf'
+        'world3.sdf'
+        # 'test.sdf'
         # 'turtlebot3_world.world'
     )
 
@@ -57,8 +57,8 @@ def generate_launch_description():
     map_path = os.path.join(
         get_package_share_directory('theta_star'),
         'maps',
-        # 'map2.yaml'
-        'test.yaml'
+        'map3.yaml'
+        # 'test.yaml'
         # 'turtlebot3_map.yaml'
     )
     
@@ -91,7 +91,7 @@ def generate_launch_description():
     ld.add_action(gzclient_cmd)
     ld.add_action(robot_state_publisher_cmd)
     ld.add_action(spawn_turtlebot_cmd)
-    ld.add_action(map_server)
-    ld.add_action(map_server_lifecyle)
+    # ld.add_action(map_server)
+    # ld.add_action(map_server_lifecyle)
 
     return ld

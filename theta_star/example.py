@@ -9,9 +9,9 @@ from geometry_msgs.msg import PoseStamped, Twist
 import time
 import cv2
 
-lookahead_distance = 0.3
+lookahead_distance = 0.15
 speed = 0.2
-expansion_size = 4
+expansion_size = 5
 
 class node:
     def __init__(self, parent=None, position=None):
@@ -35,48 +35,93 @@ def theta_star(start, end, grid, occupations, penalties):
     end_node = node(None, end)
 
     open_list = PriorityQueue()
-    closed_list = []
+    closed_list = dict()  
 
     open_list.put((start_node.f, start_node))
-    
+    closed_list[start_node.position] = start_node
+
     while not open_list.empty():
         current_node = open_list.get()[1]
-        closed_list.append(current_node)
 
-        if current_node == end_node:
+        if current_node.position == end_node.position:
             path = []
             while current_node:
                 path.append(current_node.position)
                 current_node = current_node.parent
-            return path[::-1] 
+            return path[::-1]
 
-        neighbors = [(0, 1), (1, 0), (0, -1), (-1, 0), 
-                     (1, 1), (1, -1), (-1, 1), (-1, -1)]
+        neighbors = [(0,1), (1,0), (0,-1), (-1,0),
+                    (1,1), (1,-1), (-1,1), (-1,-1)]
 
         for new_position in neighbors:
-            node_position = (current_node.position[0] + new_position[0], 
-                             current_node.position[1] + new_position[1])
+            node_position = (
+                current_node.position[0] + new_position[0],
+                current_node.position[1] + new_position[1]
+            )
 
-            if (0 <= node_position[0] < grid.shape[0]) and (0 <= node_position[1] < grid.shape[1]):
-                if grid[node_position[0]][node_position[1]] != 1:  
-                    neighbor_node = node(current_node, node_position)
+            if node_position[0] < 0 or node_position[0] >= grid.shape[0]:
+                continue
+            if node_position[1] < 0 or node_position[1] >= grid.shape[1]:
+                continue
+            if grid[node_position[0]][node_position[1]] == 1:
+                continue
 
-                    if neighbor_node in closed_list:
-                        continue
+            if current_node.parent and line_of_sight(current_node.parent.position, node_position, grid):
+                new_g = current_node.parent.g + heuristic(current_node.parent.position, node_position)
+                tentative_node = node(current_node.parent, node_position)
+            else:
+                new_g = current_node.g + heuristic(current_node.position, node_position)
+                tentative_node = node(current_node, node_position)
 
-                    base_cost = 1.0
-                    dynamic_cost = occupations[node_position[0]][node_position[1]]
-                    penalty = penalties[node_position[0]][node_position[1]]
-                    total_cost = base_cost + dynamic_cost * penalty
+            dynamic_cost = occupations[node_position[1]][node_position[0]]
+            penalty = penalties[node_position[1]][node_position[0]]
+            new_g += dynamic_cost * penalty
 
-                    neighbor_node.g = current_node.g + total_cost
-                    neighbor_node.h = heuristic(neighbor_node.position, end_node.position)
-                    neighbor_node.f = neighbor_node.g + neighbor_node.h
+            if node_position in closed_list:
+                existing_node = closed_list[node_position]
+                if new_g >= existing_node.g:
+                    continue
+                closed_list.pop(node_position)
 
-                    if add_to_open(open_list, neighbor_node):
-                        open_list.put((neighbor_node.f, neighbor_node))
+            tentative_node.g = new_g
+            tentative_node.h = heuristic(tentative_node.position, end_node.position)
+            tentative_node.f = tentative_node.g + tentative_node.h
+
+            open_list.put((tentative_node.f, tentative_node))
+            closed_list[tentative_node.position] = tentative_node
 
     return None
+
+def line_of_sight(start, end, grid):
+    x0, y0 = start
+    x1, y1 = end
+    
+    if x0 < 0 or x0 >= grid.shape[0] or y0 < 0 or y0 >= grid.shape[1]:
+        return False
+    if x1 < 0 or x1 >= grid.shape[0] or y1 < 0 or y1 >= grid.shape[1]:
+        return False
+    
+    dx = abs(x1 - x0)
+    dy = abs(y1 - y0)
+    sx = 1 if x0 < x1 else -1
+    sy = 1 if y0 < y1 else -1
+    err = dx - dy
+
+    while True:
+        if grid[x0][y0] == 1:
+            return False
+            
+        if x0 == x1 and y0 == y1:
+            break
+            
+        e2 = 2 * err
+        if e2 > -dy:
+            err -= dy
+            x0 += sx
+        if e2 < dx:
+            err += dx
+            y0 += sy
+    return True
 
 def add_to_open(open_list, neighbor):
     for item in open_list.queue:
@@ -99,20 +144,38 @@ def euler_from_quaternion(x, y, z, w):
         yaw_z = math.atan2(t3, t4)
      
         return yaw_z
-# def costmap(data, width, height, resolution):
-#     data = np.array(data).reshape(height, width)
-#     wall = np.where(data == 100)
-#     for i in range(-expansion_size, expansion_size + 1):
-#         for j in range(-expansion_size, expansion_size + 1):
-#             if i == 0 and j == 0:
-#                 continue
-#             x = wall[0] + i
-#             y = wall[1] + j
-#             x = np.clip(x, 0, height - 1)
-#             y = np.clip(y, 0, width - 1)
-#             data[x, y] = 100
-#     data = data.astype(float) * resolution
-#     return data
+
+def pure_pursuit(current_x, current_y, current_heading, path, index):
+    global lookahead_distance
+    closest_point = None
+    v = speed
+    
+    for i in range(index, len(path)):
+        x = path[i][0]
+        y = path[i][1]
+        distance = math.hypot(current_x - x, current_y - y)
+        if lookahead_distance < distance:
+            closest_point = (x, y)
+            index = i
+            break
+    if closest_point is not None:
+        target_heading = math.atan2(closest_point[1] - current_y, closest_point[0] - current_x)
+        desired_steering_angle = target_heading - current_heading
+    else:
+        target_heading = math.atan2(path[-1][1] - current_y, path[-1][0] - current_x)
+        desired_steering_angle = target_heading - current_heading
+        index = len(path) - 1
+    
+    if desired_steering_angle > math.pi:
+        desired_steering_angle -= 2 * math.pi
+    elif desired_steering_angle < -math.pi:
+        desired_steering_angle += 2 * math.pi
+    
+    if desired_steering_angle > math.pi / 6 or desired_steering_angle < -math.pi / 6:
+        sign = 1 if desired_steering_angle > 0 else -1
+        desired_steering_angle = sign * math.pi / 4
+        v = 0.0
+    return v, desired_steering_angle, index
 
 def costmap(data, width, height, resolution):
     grid = np.array(data, dtype=np.int8).reshape(height, width)
@@ -124,9 +187,7 @@ def costmap(data, width, height, resolution):
     dilated_obstacles = cv2.dilate(obstacles_mask, kernel)
     result = np.where(dilated_obstacles == 255, 100, grid)
     result[grid == -1] = -1
-    cv2.imwrite('debug_map.png', (result * 2.55).astype(np.uint8)) 
-    np.savetxt('debug.txt',result)
-    # cv2.imwrite('debug_map.png', result)
+    cv2.imwrite('/home/sa/turtlebot3_ws/src/theta_star/debug/debug_map.png', (result * 2.55).astype(np.uint8)) 
     return result.flatten().tolist()
 
 
@@ -145,9 +206,6 @@ class Navigation(Node):
                 'odom_init': False,
                 'occupations': None,
                 'penalties': None,       
-                'last_time':  self.get_clock().now(),
-                'previous_angle_error': 0.0,
-                'i_angle_error':0.0,
             },
             namespace1: {
                 'x': 0.0,
@@ -158,16 +216,9 @@ class Navigation(Node):
                 'index': 0,
                 'odom_init': False,
                 'occupations': None,
-                'penalties': None,   
-                'last_time':  self.get_clock().now(),
-                'previous_angle_error': 0.0,
-                'i_angle_error':0.0,  
+                'penalties': None,     
             }
         }
-        
-        self.last_time = self.get_clock().now()
-        self.previous_angle_error = 0.0
-        self.i_angle_error = 0.0
         self.subscription_map = self.create_subscription(
             OccupancyGrid, 'map', self.map_callback, 10
         )
@@ -183,15 +234,17 @@ class Navigation(Node):
                 f'/{namespace}/cmd_vel', 
                 10
             )
-        #test1.sdf
-        self.goals = [(3.99715, -1.6586), (3.50709, 1.44957), (1.25942, 1.25394), (-0.689823, 2.26387),
-                      (-2.50234, 2.11622), (-1.7666, 0.285539), (-4.07267, 2.43495)]        
+        # # test1.sdf
+        self.goals = [(3.99715, -1.6586), (3.50709, 1.44957), (1.25942, 1.25394), (-0.689823, 2.26387), (-2.50234, 2.11622), (-1.7666, 0.285539), (-4.07267, 2.43495)]     
+        
+        # world3.sdf
+        # self.goals = [(-1.48882, 0.30411), (4.31674, 1.16783), (2.74416, -3.29382), (-1.68252, -2.83125), (-5.24987, 1.06107), (-1.27769, 3.59045)]   
         
         self.map_init_time = 0.0
         timer_period = 0.01
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.get_logger().info("Wait for targets")
-    
+        self.saved = False
     def create_odom_callback(self, namespace):
         def callback(msg):
             if not self.map_initialized:
@@ -220,7 +273,7 @@ class Navigation(Node):
                         x = np.clip(x, 0, self.height - 1)
                         y = np.clip(y, 0, self.width - 1)
                         if 0 <= x < self.height and 0 <= y < self.width:
-                            other['occupations'][y][x] += 0.6
+                            other['occupations'][y][x] += 1
 
             robot['odom_init'] = True
         return callback
@@ -235,22 +288,24 @@ class Navigation(Node):
             self.height = msg.info.height
             self.grid = costmap(msg.data, self.width, self.height, self.map_resolution)
             self.grid = np.array(self.grid).reshape(self.height, self.width)
-            self.grid = np.where((self.grid == 100) | (self.grid == -1), 1, 0)
-            
+            self.grid = np.where((self.grid == 100) | (self.grid == -1), 1, 0).astype(np.int8)
+            np.savetxt('/home/sa/turtlebot3_ws/src/theta_star/debug/debug.txt', self.grid, fmt='%d')
             self.map_initialized = True
             self.map_init_time = time.time()
             
             for robot_name in self.robots:
                 self.robots[robot_name]['occupations'] = np.zeros((self.height, self.width), dtype=float)
                 self.robots[robot_name]['penalties'] = np.ones((self.height, self.width), dtype=float) 
-    
     def timer_callback(self):
-
+        # test1.sdf
         if not self.map_initialized or time.time() - self.map_init_time < 90:
+        
+        # world3.sdf
+        # if not self.map_initialized or time.time() - self.map_init_time < 20:
             print(time.time() - self.map_init_time)
             return
         for robot in self.robots.values():
-            robot['occupations'] = np.maximum(robot['occupations'] - 0.1, 0)
+            robot['occupations'] = np.maximum(robot['occupations'] - 0.07, 0)
 
         for robot_name, robot_data in self.robots.items():
             # if not robot_data['odom_init']:
@@ -265,20 +320,19 @@ class Navigation(Node):
         if not self.map_initialized:
             return
         if self.robots[robot_name]['goal'] == None:
-            robot = self.robots[robot_name]
-            # robot['occupations'] = np.zeros((self.height, self.width))
-
             self.get_logger().info("Generating new goal..........")
             ind = np.random.randint(0, len(self.goals))
             goal_world = self.goals[ind]
 
             goal = self.world_to_grid(goal_world[0], goal_world[1])
             other_name = 'tb0' if robot_name == 'tb1' else 'tb1'
-            self.robots[robot_name]['goal'] = goal  
             self.update_occupations(robot_name)
 
+            self.robots[robot_name]['goal'] = goal  
+
             self.get_logger().info(f"New goal for {robot_name}: {goal}")
-            
+            robot = self.robots[robot_name]
+                        
             if self.robots[robot_name]['goal'] == self.robots[other_name]['goal']:
                 self.robots[robot_name]['goal'] = None
                 self.generate_new_goal(robot_name)
@@ -311,76 +365,51 @@ class Navigation(Node):
         grid = self.grid
         grid[start[1]][start[0]] = 0
 
+        if not self.saved:
+            debug_grid = self.grid.copy()
+            debug_grid[start[1]][start[0]] = 2
+            
+            for goal in self.goals:
+                goal = self.world_to_grid(goal[0],goal[1]) 
+
+                debug_grid[goal[1]][goal[0]] = 3
+            
+            np.savetxt('/home/sa/turtlebot3_ws/src/theta_star/debug/debug.txt', debug_grid, fmt='%d')
+            print('grid saved')
+            self.saved = True
         path = theta_star(
             (start[1], start[0]), (goal[1], goal[0]), grid,
             robot['occupations'],
             robot['penalties']
         )
-        
+                
         if path is None:
             self.get_logger().warn(f"No path found for {robot_name}")
             robot['goal'] = None
             return
             
         robot['path'] = [self.grid_to_world(i[1], i[0]) for i in path]
+
+        v, angle, index = pure_pursuit(
+            robot['x'], robot['y'], robot['yaw'],
+            robot['path'], robot['index']
+        )
         
-        robot['current_path_index']=0
-        self.follow_path(robot_name)
+        twist = Twist()
+        twist.linear.x = v
+        twist.angular.z = angle
+        robot['cmd_vel_pub'].publish(twist)
+        
         if self.distance_to_goal(robot) < 0.1:
+            self.get_logger().info("The goal reached!!!!!!!!!!!!!!!!!!!!")
             robot['goal'] = None
-     
-    def follow_path(self, robot_name):
-        robot = self.robots[robot_name]
-        if robot['path'] and robot['current_path_index'] < len(robot['path']):
-            current_goal = robot['path'][robot['current_path_index']]
-            error_x = current_goal[0] - robot['x']
-            error_y = current_goal[1] - robot['y']
-
-            distance = math.sqrt(pow(error_x, 2) + pow(error_y, 2))
-            if distance < 0.2: 
-                robot['current_path_index'] += 1
-                if robot['current_path_index'] >= len(robot['path']):
-                    self.get_logger().info("Reached the end of the path.")
-                    vel_msg = Twist()
-                    robot['cmd_vel_pub'].publish(vel_msg)  
-                    return
-
-            current_time = self.get_clock().now()
-            dt = (current_time - robot['last_time']).nanoseconds / 1e9
-            robot['last_time'] = current_time  # Обновляем время для конкретного робота
-
-            angle_to_goal = math.atan2(error_y, error_x)
-            angle_error = self.normalize_angle(angle_to_goal - robot['yaw'])
-            d_angle_error = (angle_error - robot['previous_angle_error']) / dt if dt > 0 else 0
-            robot['previous_angle_error'] = angle_error
-            robot['i_angle_error'] += angle_error
-
-            kp = 5.0
-            kd = 0.5
-            ki = 0.000008
-
-            angular_velocity = kp * angle_error + ki*robot['i_angle_error'] + kd * d_angle_error
-            angular_velocity = max(-1.0, min(1.0, angular_velocity))  
-
-            linear_velocity = 0.3 if abs(angle_error) < 0.05 else 0.05
-
-            twist = Twist()
-            twist.linear.x = linear_velocity
-            twist.angular.z = angular_velocity
-            robot['cmd_vel_pub'].publish(twist)
             
-    def normalize_angle(self, angle):
-        while angle > math.pi:
-            angle -= 2 * math.pi
-        while angle < -math.pi:
-            angle += 2 * math.pi
-        return angle
-    
     def distance_to_goal(self, robot):
         if not robot['path']:
             return float('inf')
-        last_point = robot['path'][-1]
-        return math.hypot(robot['x'] - last_point[0], robot['y'] - last_point[1])
+        init_point = self.world_to_grid(robot['x'], robot['y'])
+        last_point = robot['goal']
+        return math.hypot(init_point[0] - last_point[0], init_point[1] - last_point[1])
             
     def world_to_grid(self, x_world, y_world):
         x_grid = int((x_world - self.map_origin[0]) / self.map_resolution)
