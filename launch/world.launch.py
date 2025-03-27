@@ -50,6 +50,10 @@ def generate_launch_description():
         LaunchConfiguration('map')
     ])
 
+    rviz_config_dir = os.path.join(
+        get_package_share_directory('theta_star'),
+        'rviz',
+        'view.rviz')
     gzserver_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory("gazebo_ros"), "launch", "gzserver.launch.py")
@@ -84,15 +88,26 @@ def generate_launch_description():
                 {'node_names': ['map_server']},
                 # {'bond_timeout': 0.5}
             ])
+    
+    rviz_node = Node(
+                package='rviz2',
+                executable='rviz2',
+                name='rviz2',
+                arguments=['-d', rviz_config_dir],
+                parameters=[{'use_sim_time': True}],
+                output='screen')
+    
     ld.add_action(declare_world_name)
     ld.add_action(declare_map_name)
     ld.add_action(gzserver_cmd)
     ld.add_action(gzclient_cmd)
     ld.add_action(map_server)
     ld.add_action(map_server_lifecyle)
+    ld.add_action(rviz_node)
+
 
 # test.yaml
-    spawn_points = [(-0.7, 0.05), (2.0, 0.5)]
+    spawn_points = [(-0.7, 0.05), (4.0, 0.05)]
     last_action = None
     remappings = [("/tf", "tf"), ("/tf_static", "tf_static")]
 
