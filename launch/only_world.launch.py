@@ -7,21 +7,18 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-
 def generate_launch_description():
     launch_file_dir = os.path.join(get_package_share_directory('turtlebot3_gazebo'), 'launch')
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    x_pose = LaunchConfiguration('x_pose', default='0.0')
-    y_pose = LaunchConfiguration('y_pose', default='0.0')
+    x_pose = LaunchConfiguration('x_pose', default='-2.0')
+    y_pose = LaunchConfiguration('y_pose', default='-0.5')
 
     world = os.path.join(
         get_package_share_directory('theta_star'),
         'worlds',
-        'world3.sdf'
-        # 'test.sdf'
-        # 'turtlebot3_world.world'
+        'test1.sdf'
     )
 
     gzserver_cmd = IncludeLaunchDescription(
@@ -53,45 +50,54 @@ def generate_launch_description():
             'y_pose': y_pose
         }.items()
     )
-    
-    map_path = os.path.join(
-        get_package_share_directory('theta_star'),
-        'maps',
-        'map3.yaml'
-        # 'test.yaml'
-        # 'turtlebot3_map.yaml'
-    )
-    
-    map_server = Node(
-        package='nav2_map_server',
-        executable='map_server',
-        name='map_server',
+    slam_toolbox = Node(
+        package='slam_toolbox',
+        executable='async_slam_toolbox_node',
+        name='async_slam_toolbox_node',
         output='screen',
-        parameters=[{'yaml_filename': map_path,
-                    'map_frame': '/map',
-                    'topic_name': "/map",
-                    'use_sim_time': True 
-                     },],
+        parameters=[{'use_sim_time': True}]
     )
+
+    rviz_config_dir = os.path.join(
+        get_package_share_directory('theta_star'),
+        'rviz',
+        'slam.rviz')
     
-    map_server_lifecyle=Node(package='nav2_lifecycle_manager',
-            executable='lifecycle_manager',
-            name='lifecycle_manager_map_server',
-            output='screen',
-                parameters=[
-                {'use_sim_time': True},
-                {'autostart': True},
-                {'node_names': ['map_server']},
-                # {'bond_timeout': 0.5}
-            ])
+    rviz_node = Node(
+                    package='rviz2',
+                    executable='rviz2',
+                    name='rviz2',
+                    arguments=['-d', rviz_config_dir],
+                    parameters=[{'use_sim_time': True}],
+                    output='screen')
+    
+    static_transform_publisher = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        arguments=['0', '0', '0', '0', '0', '0', 'map', 'odom']
+    )
+
+    amcl = Node(
+        package='nav2_amcl',
+        executable='amcl',
+        name='amcl',
+        parameters=[{
+            'use_sim_time': True,
+            'odom_model_type': 'diff-corrected',
+            'laser_model_type': 'likelihood_field'
+        }]
+    )
+
     ld = LaunchDescription()
 
-    # Add the commands to the launch description
     ld.add_action(gzserver_cmd)
     ld.add_action(gzclient_cmd)
     ld.add_action(robot_state_publisher_cmd)
     ld.add_action(spawn_turtlebot_cmd)
-    # ld.add_action(map_server)
-    # ld.add_action(map_server_lifecyle)
+    ld.add_action(slam_toolbox)
+    ld.add_action(static_transform_publisher)
+    ld.add_action(amcl)
+
+    ld.add_action(rviz_node)
 
     return ld

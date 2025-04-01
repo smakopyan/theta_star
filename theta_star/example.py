@@ -248,7 +248,7 @@ class Navigation(Node):
                 return
             robot.laser_data = msg.ranges
             robot.obstacle_detected = any(
-                distance < 0.4 for distance in msg.ranges if distance > 0.
+                distance < 0.3 for distance in msg.ranges if distance > 0.
             )
         return callback
 
@@ -398,13 +398,13 @@ class Navigation(Node):
         if robot.laser_data:
             v = angle = None
             for i in range(60):
-                if robot.laser_data[i] < 0.4:
+                if robot.laser_data[i] < 0.3:
                         v = 0.08
                         angle = -math.pi/4 
                         break
                 if v == None:
                     for i in range(300,360):
-                        if robot.laser_data[i] < 0.4:
+                        if robot.laser_data[i] < 0.3:
                             v = 0.08
                             angle = math.pi/4
                             break
@@ -426,12 +426,16 @@ class Navigation(Node):
         global lookahead_distance 
         closest_point = None
         v = speed
+        lookahead = lookahead_distance
 
+        if robot.obstacle_detected:
+            v *= 0.5
+            lookahead *= 0.5
         for i in range(index, len(path)):
             x = path[i][0]
             y = path[i][1]
             distance = math.hypot(current_x - x, current_y - y)
-            if lookahead_distance <= distance:
+            if lookahead <= distance:
                 closest_point = (x, y)
                 index = i
                 break
@@ -480,9 +484,9 @@ class Navigation(Node):
         path_marker.id = 0
         path_marker.type = Marker.LINE_STRIP
         path_marker.action = Marker.ADD
-        path_marker.scale.x = 0.05  # Line width
+        path_marker.scale.x = 0.05 
         path_marker.color.a = 1.0
-        path_marker.color.g = 1.0  # Green color
+        path_marker.color.g = 1.0  
         path_marker.color.r = 0.0
         path_marker.color.b = 0.0
         for (x, y) in robot.path:
@@ -508,7 +512,7 @@ class Navigation(Node):
         lookahead_marker.scale.y = 0.1
         lookahead_marker.scale.z = 0.1
         lookahead_marker.color.a = 1.0
-        lookahead_marker.color.r = 1.0  # Red color
+        lookahead_marker.color.r = 1.0  
         lookahead_marker.color.g = 0.0
         lookahead_marker.color.b = 0.0
         robot.lookahead_marker_pub.publish(lookahead_marker)

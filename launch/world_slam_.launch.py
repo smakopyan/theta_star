@@ -56,86 +56,58 @@ def generate_launch_description():
     ld.add_action(gzserver_cmd)
     ld.add_action(gzclient_cmd)
 
-    spawn_points = [(-1.5, 0.5), (1.5, 0.5)]
-    last_action = None
-    remappings = [("/tf", "tf"), ("/tf_static", "tf_static")]
+    spawn_points = [(-1.5, 0.5)]
 
-    for i in range(2):
-        x, y = spawn_points[i]
-        name = "tb3_" + str(i)
-        namespace = "/tb3_" + str(i)
+    x, y = spawn_points
 
-        turtlebot_state_publisher = Node(
-            package="robot_state_publisher",
-            namespace=name,
-            executable="robot_state_publisher",
-            output="screen",
-            parameters=[{
-                'frame_prefix': name + '/',
-                "use_sim_time": True,
-                "publish_frequency": 10.0}],
-            # remappings=remappings,
-            arguments=[urdfs[i]],
-        )
+    turtlebot_state_publisher = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        output="screen",
+        parameters=[{
+            "use_sim_time": True,
+            "publish_frequency": 10.0}],
+        # remappings=remappings,
+        arguments=[urdfs[i]],
+    )
 
-        spawn_turtlebot3 = Node(
-            package="gazebo_ros",
-            executable="spawn_entity.py",
-            arguments=[
-                "-file",
-                models[i],
-                "-entity",
-                name,
-                "-robot_namespace",
-                name,
-                "-x",
-                str(x),
-                "-y",
-                str(y),
-                "-z",
-                "0.01",
-            ],
-            parameters=[{'use_sim_time': True}],
-            output="screen",
-        )
+    spawn_turtlebot3 = Node(
+        package="gazebo_ros",
+        executable="spawn_entity.py",
+        arguments=[
+            "-file",
+            models[i],
+            "-x",
+            str(x),
+            "-y",
+            str(y),
+            "-z",
+            "0.01",
+        ],
+        parameters=[{'use_sim_time': True}],
+        output="screen",
+    )
 
-        async_slam_toolbox = Node(
-            package='slam_toolbox',
-            executable='async_slam_toolbox_node',
-            name='async_slam_toolbox_node',
-            namespace=name,
-            parameters=[{
-                'use_sim_time': True,
-                'odom_frame': name + '/odom',
-                'base_frame': name + '/base_footprint',
-                'scan_topic': '/scan',
-                'map_frame': name + '/map',
-                'minimum_travel_distance': 0.3,
-                'minimum_travel_heading': 0.3,
-                'resolution': 0.05,
-            }],
-            remappings=[
-                ("/map", "map"),
-                ("/map_metadata", "map_metadata"),
-                ("/slam_toolbox/scan_visualization", "slam_toolbox/scan_visualization"),
-                ("/slam_toolbox/graph_visualization","slam_toolbox/graph_visualization"),
-            ],
-            
-            output='screen',
-            
-        )  
-        if not last_action:
-            ld.add_action(turtlebot_state_publisher)
-            ld.add_action(spawn_turtlebot3)
-            ld.add_action(async_slam_toolbox)
+    async_slam_toolbox = Node(
+        package='slam_toolbox',
+        executable='async_slam_toolbox_node',
+        name='async_slam_toolbox_node',
+        parameters=[{
+            'use_sim_time': True,
+            'odom_frame': '/odom',
+            'base_frame': '/base_footprint',
+            'scan_topic': 'scan',
+            'map_frame':  '/map',
+            'minimum_travel_distance': 0.3,
+            'minimum_travel_heading': 0.3,
+            'resolution': 0.05,
+        }],
+        
+        output='screen',
+        
+    )  
+    ld.add_action(turtlebot_state_publisher)
+    ld.add_action(spawn_turtlebot3)
+    ld.add_action(async_slam_toolbox)
 
-        else:
-            spawn_turtlebot3_event = RegisterEventHandler(
-                event_handler=OnProcessExit(
-                    target_action=last_action,
-                    on_exit=[spawn_turtlebot3, turtlebot_state_publisher, async_slam_toolbox],
-                )
-            )
-            ld.add_action(spawn_turtlebot3_event)
-        last_action = spawn_turtlebot3
     return ld

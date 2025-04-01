@@ -16,7 +16,7 @@ setup(
         ('share/' + package_name + '/maps', ['maps/map1.yaml','maps/test.yaml','maps/test.pgm', 'maps/test1.yaml','maps/test1.pgm', 'maps/map1.pgm', 'maps/map2.yaml', 'maps/map2.pgm',
                                              'maps/map3.yaml', 'maps/map3.pgm',
                                              "maps/turtlebot3_map.yaml", "maps/turtlebot3_map.pgm"]),
-        ('share/' + package_name + '/rviz', ['rviz/view.rviz']),
+        ('share/' + package_name + '/rviz', ['rviz/view.rviz', 'rviz/slam.rviz']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -27,7 +27,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [ 
-            'navigate = theta_star.example:main'
+            'navigate = theta_star.example:main',
+            'one_robot = theta_star.one_robot:main'
         ],
     },
 )
