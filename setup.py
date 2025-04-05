@@ -10,13 +10,14 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/launch', ['launch/world.launch.py', 'launch/world_slam_.launch.py', 'launch/only_world.launch.py']),
+        ('share/' + package_name + '/launch', ['launch/real_world.launch.py', 'launch/simulation_basic.launch.py', 'launch/simulation_only_world.launch.py', 'launch/simulation_slam.launch.py']),
         ('share/' + package_name + '/worlds', ['worlds/world1.sdf','worlds/world2.sdf', 'worlds/world3.sdf',
                                                'worlds/test1.sdf', 'worlds/turtlebot3_world.world', 'worlds/test.sdf']),
         ('share/' + package_name + '/maps', ['maps/map1.yaml','maps/test.yaml','maps/test.pgm', 'maps/test1.yaml','maps/test1.pgm', 'maps/map1.pgm', 'maps/map2.yaml', 'maps/map2.pgm',
                                              'maps/map3.yaml', 'maps/map3.pgm',
+                                             'maps/map.yaml', 'maps/map.pgm',
                                              "maps/turtlebot3_map.yaml", "maps/turtlebot3_map.pgm"]),
-        ('share/' + package_name + '/rviz', ['rviz/view.rviz', 'rviz/slam.rviz']),
+        ('share/' + package_name + '/rviz', ['rviz/multi_robot_view.rviz', 'rviz/single_robot_view.rviz']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -27,8 +28,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [ 
-            'navigate = theta_star.example:main',
-            'one_robot = theta_star.one_robot:main'
+            'navigate = theta_star.multi_robot_navigator_example:main',
+            'one_robot = theta_star.single_robot_navigator:main'
         ],
     },
 )

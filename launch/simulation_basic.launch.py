@@ -53,7 +53,7 @@ def generate_launch_description():
     rviz_config_dir = os.path.join(
         get_package_share_directory('theta_star'),
         'rviz',
-        'view.rviz')
+        'multi_robot_view.rviz')
     gzserver_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory("gazebo_ros"), "launch", "gzserver.launch.py")

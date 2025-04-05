@@ -18,7 +18,7 @@ def generate_launch_description():
     world = os.path.join(
         get_package_share_directory('theta_star'),
         'worlds',
-        'test1.sdf'
+        'world3.sdf'
     )
 
     gzserver_cmd = IncludeLaunchDescription(
@@ -61,7 +61,7 @@ def generate_launch_description():
     rviz_config_dir = os.path.join(
         get_package_share_directory('theta_star'),
         'rviz',
-        'slam.rviz')
+        'single_robot_view.rviz')
     
     rviz_node = Node(
                     package='rviz2',
