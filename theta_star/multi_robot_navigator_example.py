@@ -80,16 +80,19 @@ def theta_star(start, end, grid, occupations, penalties):
                 tentative_node = node(current_node, node_position)
 
             base_cost = 1.0
-            dynamic_cost = occupations[node_position[0]][node_position[1]]
-            penalty = penalties[node_position[0]][node_position[1]]
-            new_g += base_cost + 2* dynamic_cost * penalty
+            dynamic_cost = occupations[node_position[1]][node_position[0]]
+            penalty = penalties[node_position[1]][node_position[0]]
+            new_g += base_cost + 2 * dynamic_cost * penalty
+            if dynamic_cost > 0:
+                print("new_g += base_cost + 2 * dynamic_cost * penalty")
+                print(f"{new_g} += {base_cost} + 2* {dynamic_cost} * {penalty}")
 
             if node_position in closed_list:
                 existing_node = closed_list[node_position]
                 if new_g >= existing_node.g:
                     continue
                 closed_list.pop(node_position)
-
+            
             tentative_node.g = new_g
             tentative_node.h = heuristic(tentative_node.position, end_node.position)
             tentative_node.f = tentative_node.g + tentative_node.h
