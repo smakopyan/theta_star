@@ -495,7 +495,11 @@ class TurtleBotEnv(Node, gym.Env):
         min_obstacle_dist = min(self.obstacles) if self.obstacles else 3.5
 
         obstacle_detected = self.lidar_obstacle_detected or self.camera_obstacle_detected
-        state = np.array([self.current_x, self.current_y, angle_diff, min_obstacle_dist])
+        state = np.array([
+            self.current_x,
+            self.current_y,
+            angle_diff,
+            min_obstacle_dist])
 
         # distance_rate = (self.past_distance - distance)
         # print(min_obstacle_dist)
@@ -518,7 +522,7 @@ class TurtleBotEnv(Node, gym.Env):
                 print("Episode terminated due to repeated obstacle detection")
 
         # Очень близко к препятствию
-        if min_obstacle_dist < 0.5:
+        if min_obstacle_dist < 0.4:
             reward -= 20 * (0.5 - min_obstacle_dist)
 
         # Достигли цели

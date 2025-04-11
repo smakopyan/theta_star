@@ -4,10 +4,10 @@ import tensorflow as tf
 # from tensorflow import kears
 from keras import layers
 import rclpy
-from . import turtlebot_env
-from my_turtlebot_package.actor_net import ImprovedActor
-from my_turtlebot_package.critic_net import ImprovedCritic, StaticCritic, world_to_map
-from my_turtlebot_package.config import TARGET_X, TARGET_Y
+from .turtlebot_env import TurtleBotEnv
+from .critic import ImprovedCritic, StaticCritic, world_to_map
+from .actor import ImprovedActor
+##from my_turtlebot_package.config import TARGET_X, TARGET_Y
 import cv2
 import matplotlib.pyplot as plt
 from scipy.ndimage import distance_transform_edt
