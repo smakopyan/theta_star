@@ -12,7 +12,7 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 def generate_launch_description():
     launch_file_dir = os.path.join(get_package_share_directory('turtlebot3_gazebo'), 'launch')
 
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     robot_state_publisher_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(launch_file_dir, 'robot_state_publisher.launch.py')
@@ -30,7 +30,7 @@ def generate_launch_description():
                                                    'maps', 'map.yaml'),
                     'map_frame': '/map',
                     'topic_name': "/map",
-                    'use_sim_time': True 
+                    'use_sim_time': False 
                      },],
     )
     
@@ -39,7 +39,7 @@ def generate_launch_description():
             name='lifecycle_manager_map_server',
             output='screen',
                 parameters=[
-                {'use_sim_time': True},
+                {'use_sim_time': False},
                 {'autostart': True},
                 {'node_names': ['map_server']},
                 # {'bond_timeout': 0.5}
@@ -56,7 +56,7 @@ def generate_launch_description():
                     executable='rviz2',
                     name='rviz2',
                     arguments=['-d', rviz_config_dir],
-                    parameters=[{'use_sim_time': True}],
+                    parameters=[{'use_sim_time': False}],
                     output='screen')
     
     amcl = Node(
@@ -64,7 +64,7 @@ def generate_launch_description():
         executable='amcl',
         name='amcl',
         parameters=[{
-            'use_sim_time': True,
+            'use_sim_time': False,
             'odom_model_type': 'diff-corrected',
             'laser_model_type': 'likelihood_field'
         }]
