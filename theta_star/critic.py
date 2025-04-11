@@ -4,31 +4,14 @@ from keras import layers
 import numpy as np
 import matplotlib.pyplot as plt
 
-def world_to_map(world_coords, resolution, origin, map_offset, map_shape):
-    x_world, y_world = world_coords
-    if isinstance(x_world, tf.Tensor):
-        x_world = x_world.numpy()
-    if isinstance(y_world, tf.Tensor):
-        y_world = y_world.numpy()
+def world_to_grid(self, x_world, y_world):
+    x_grid = int((x_world - self.map_origin[0]) / self.map_resolution)
+    y_grid = int((y_world - self.map_origin[1])/ self.map_resolution)
 
-    # Проверка на NaN и Inf
-    if isinstance(x_world, np.ndarray):
-        mask = np.isfinite(x_world) & np.isfinite(y_world)
-        x_world, y_world = x_world[mask], y_world[mask]
-
-    elif not np.isfinite(x_world) or not np.isfinite(y_world):
-        return None, None  # Вернем None, если координаты некорректны
-
-    # Преобразование
-    x_map = ((x_world - origin[0]) / resolution).astype(int) + map_offset[0]
-    y_map = ((y_world - origin[1]) / resolution).astype(int) + map_offset[1]
-
-    # Переворот Y
-    y_map = map_shape[0] - y_map - 1
-
-    # Ограничение координат
-    x_map = np.clip(x_map, 0, map_shape[1] - 1)
-    y_map = np.clip(y_map, 0, map_shape[0] - 1)
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # width и height хз правильно или нет, проверь!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+    x_map = np.clip(x_grid, 0, self.width[1] - 1)
+    y_map = np.clip(y_grid, 0, self.height[0] - 1)
 
     return x_map, y_map
 
@@ -193,8 +176,7 @@ class StaticCritic:
         if state.ndim == 2 and state.shape[0] == 1:
             state = state[0] 
         x, y = state[:2]  # Берём координаты состояния
-        x_map, y_map = world_to_map((x, y), resolution=0.05, origin=(-4.86, -7.36),
-                                    map_offset=(45, 15), map_shape=self.grid_map.shape)
+        x_map, y_map = world_to_grid(x, y)
         return self.value_map[y_map, x_map]  # Достаём значение из таблицы
     
 
