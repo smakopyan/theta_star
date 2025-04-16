@@ -12,13 +12,33 @@ import cv2
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
 from std_msgs.msg import ColorRGBA
-
+import os
+from ament_index_python.packages import get_package_share_directory
+import matplotlib.pyplot as plt
 # lookahead_distance = 0.15
 # speed = 0.1
 
 lookahead_distance = 0.2
 speed = 0.1
 expansion_size = 5
+
+
+def slam_to_grid_map(slam_map, threshold=128):
+    height, width = slam_map.shape
+    
+    obstacles_mask = np.where(slam_map == 100, 255, 0).astype(np.uint8)
+    
+    kernel_size = 2 * expansion_size + 1
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
+    dilated_obstacles = cv2.dilate(obstacles_mask, kernel)
+    
+    result = np.where(dilated_obstacles == 255, 100, slam_map)
+    result[slam_map == -1] = -1
+    plt.figure(figsize=(8, 8))
+    plt.imshow(result, cmap='gray')
+    plt.show()
+
+    return result.flatten().tolist(), height, width
 
 class node:
     def __init__(self, parent=None, position=None):
@@ -66,10 +86,10 @@ def theta_star(start, end, grid, occupations, penalties):
                 current_node.position[1] + new_position[1]
             )
 
-            if node_position[0] < 0 or node_position[0] >= grid.shape[0]:
-                continue
-            if node_position[1] < 0 or node_position[1] >= grid.shape[1]:
-                continue
+            # if node_position[0] < 0 or node_position[0] >= grid.shape[0]:
+            #     continue
+            # if node_position[1] < 0 or node_position[1] >= grid.shape[1]:
+                # continue
             if grid[node_position[0]][node_position[1]] == 1:
                 continue
             if current_node.parent and line_of_sight(current_node.parent.position, node_position, grid):
@@ -80,16 +100,19 @@ def theta_star(start, end, grid, occupations, penalties):
                 tentative_node = node(current_node, node_position)
 
             base_cost = 1.0
-            dynamic_cost = occupations[node_position[0]][node_position[1]]
-            penalty = penalties[node_position[0]][node_position[1]]
-            new_g += base_cost + 2* dynamic_cost * penalty
+            dynamic_cost = occupations[node_position[1]][node_position[0]]
+            penalty = penalties[node_position[1]][node_position[0]]
+            new_g += base_cost + 2 * dynamic_cost * penalty
+            if dynamic_cost > 0:
+                print("new_g += base_cost + 2 * dynamic_cost * penalty")
+                print(f"{new_g} += {base_cost} + 2* {dynamic_cost} * {penalty}")
 
             if node_position in closed_list:
                 existing_node = closed_list[node_position]
                 if new_g >= existing_node.g:
                     continue
                 closed_list.pop(node_position)
-
+            
             tentative_node.g = new_g
             tentative_node.h = heuristic(tentative_node.position, end_node.position)
             tentative_node.f = tentative_node.g + tentative_node.h
@@ -103,10 +126,10 @@ def line_of_sight(start, end, grid):
     x0, y0 = start
     x1, y1 = end
     
-    if x0 < 0 or x0 >= grid.shape[0] or y0 < 0 or y0 >= grid.shape[1]:
-        return False
-    if x1 < 0 or x1 >= grid.shape[0] or y1 < 0 or y1 >= grid.shape[1]:
-        return False
+    # if x0 < 0 or x0 >= grid.shape[0] or y0 < 0 or y0 >= grid.shape[1]:
+    #     return False
+    # if x1 < 0 or x1 >= grid.shape[0] or y1 < 0 or y1 >= grid.shape[1]:
+    #     return False
     
     dx = abs(x1 - x0)
     dy = abs(y1 - y0)
@@ -191,10 +214,10 @@ class Navigation(Node):
         self.tb0 = Robot(namespace0)
         self.tb1 = Robot(namespace1)
         self.robots = [self.tb0, self.tb1]
+        self.map_resolution = 0.05
+        self.map_origin = (-7.76,-7.15)
+        self.map_init_time = 0.0
 
-        self.subscription_map = self.create_subscription(
-            OccupancyGrid, 'map', self.map_callback, 10
-        )
         for robot in self.robots:
             self.create_subscription(
                 Odometry, 
@@ -231,12 +254,22 @@ class Navigation(Node):
                 10
             )
         # # test1.sdf
-        self.goals = [(3.99715, -1.6586), (3.50709, 1.44957), (1.25942, 1.25394), (-0.689823, 2.26387), (-2.50234, 2.11622), (-1.7666, 0.285539), (-4.07267, 2.43495)]     
+        # self.goals = [(3.99715, -1.6586), (3.50709, 1.44957), (1.25942, 1.25394), (-0.689823, 2.26387), (-2.50234, 2.11622), (-1.7666, 0.285539), (-4.07267, 2.43495)]     
         
         # world3.sdf
-        # self.goals = [(-1.48882, 0.30411), (4.31674, 1.16783), (2.74416, -3.29382), (-1.68252, -2.83125), (-5.24987, 1.06107), (-1.27769, 3.59045)]   
-        
-        self.map_init_time = 0.0
+        self.goals = [(-1.48882, 0.30411), (4.31674, 1.16783), (2.74416, -3.29382), (-1.68252, -2.83125), (-5.24987, 1.06107), (-1.27769, 3.59045)]   
+        slam_map = cv2.imread(os.path.join(get_package_share_directory('theta_star'),
+                                           'maps','map3.pgm'), cv2.IMREAD_GRAYSCALE)
+    
+        self.grid = slam_to_grid_map(slam_map)[0]
+        self.height = slam_to_grid_map(slam_map)[1]
+        self.width = slam_to_grid_map(slam_map)[2]
+        for robot in self.robots:
+            robot.occupations = np.zeros((self.height, self.width), dtype=float)
+            robot.penalties = np.ones((self.height, self.width), dtype=float)
+
+        self.map_initialized = True
+        self.map_init_time = time.time()
         timer_period = 0.01
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.get_logger().info("Wait for targets")
@@ -291,7 +324,6 @@ class Navigation(Node):
             ]
             self.width = msg.info.width
             self.height = msg.info.height
-            self.grid = costmap(msg.data, self.width, self.height, self.map_resolution)
             self.grid = np.array(self.grid).reshape(self.height, self.width)
             self.grid = np.where((self.grid == 100) | (self.grid == -1), 1, 0).astype(np.int8)
             self.map_initialized = True
@@ -302,12 +334,12 @@ class Navigation(Node):
                 robot.penalties = np.ones((self.height, self.width), dtype=float) 
     def timer_callback(self):
         # test1.sdf
-        if not self.map_initialized or time.time() - self.map_init_time < 90:
+        # if not self.map_initialized or time.time() - self.map_init_time < 90:
         
         # world3.sdf
         # if not self.map_initialized or time.time() - self.map_init_time < 20:
-            print(time.time() - self.map_init_time)
-            return
+        #     print(time.time() - self.map_init_time)
+        #     return
         # for robot in self.robots:
             # robot.occupations = np.maximum(robot.occupations - 0.07, 0)
 
@@ -362,7 +394,6 @@ class Navigation(Node):
         other = self.tb0 if robot == self.tb1 else self.tb1
 
         grid = self.grid
-        grid[start[1]][start[0]] = 0
         path = theta_star(
             (start[1], start[0]), (goal[1], goal[0]), grid,
             robot.occupations,

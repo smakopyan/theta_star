@@ -45,6 +45,7 @@ class ImprovedActor(tf.keras.Model):
         # self.bn1 = layers.BatchNormalization()  
         self.state_dim = state_dim
         self.action_dim = action_dim
+
         self.rb1 = ResBlock(state_dim, state_dim, n_neurons)
         self.rb2 = ResBlock(state_dim + state_dim, state_dim + state_dim, n_neurons)
 

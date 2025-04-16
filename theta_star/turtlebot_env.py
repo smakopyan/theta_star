@@ -4,37 +4,39 @@ import numpy as np
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, OccupancyGrid, MapMetaData    
 from sensor_msgs.msg import LaserScan, Image
 import math
 from std_srvs.srv import Empty
 from cv_bridge import CvBridge
 import cv2
 import collections
-from .theta_star import theta_star
+from theta_star import ThetaStar
 import matplotlib.pyplot as plt
 from collections import deque
 import logging
+from multi_robot_navigator_example import euler_from_quaternion
+import os
+from ament_index_python.packages import get_package_share_directory
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Point, Pose
+from std_msgs.msg import ColorRGBA
+from std_msgs.msg import Header
+from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSHistoryPolicy, QoSReliabilityPolicy
 
 logging.basicConfig(filename='training_logs.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 def slam_to_grid_map(slam_map, threshold=128):
-
+    
     grid_map = np.where(slam_map < threshold, 1, 0)  
     num_obstacles = np.count_nonzero(grid_map == 1)
-
-    # print(num_obstacles)
-    
-    # Визуализация grid_map
-    # plt.figure(figsize=(8, 8))
-    # plt.imshow(grid_map, cmap='gray')
-    # plt.title(f'Grid Map с порогом {threshold}')
-    # plt.axis('off')
-    # plt.show()
-    
     return grid_map
-
+    
+def grid_to_world(x_grid, y_grid, map_resolution = 0.05, map_origin = (-7.76,-7.15)):
+    x_world = x_grid * map_resolution + map_origin[0]
+    y_world = y_grid * map_resolution + map_origin[1]
+    return (x_world, y_world)
 
 def world_to_map(world_coords, resolution, origin, map_offset, map_shape):
     """
@@ -53,44 +55,38 @@ def world_to_map(world_coords, resolution, origin, map_offset, map_shape):
     """
     x_world, y_world = world_coords
 
-    # Обработка массивов и одиночных значений
-    if isinstance(x_world, np.ndarray):
-        x_map = ((x_world - origin[0]) / resolution).astype(int) + map_offset[0]
-        y_map = ((y_world - origin[1]) / resolution).astype(int) + map_offset[1]
+    # Для одиночных значений (не массивов)
+    if not isinstance(x_world, np.ndarray):
+        x_map = int((x_world - origin[0]) / resolution) 
+        y_map = int((y_world - origin[1]) / resolution) 
     else:
-        x_map = int((x_world - origin[0]) / resolution) + map_offset[0]
-        y_map = int((y_world - origin[1]) / resolution) + map_offset[1]
-
-    # Переворачиваем Y, если SLAM-карта инвертирована
-    if isinstance(y_map, np.ndarray):
-        y_map = map_shape[0] - y_map - 1
-        x_map = np.clip(x_map, 0, map_shape[1] - 1)
-        y_map = np.clip(y_map, 0, map_shape[0] - 1)
-    else:
-        y_map = map_shape[0] - y_map - 1
-        x_map = max(0, min(x_map, map_shape[1] - 1))
-        y_map = max(0, min(y_map, map_shape[0] - 1))
-
+        # Для массивов
+        x_map = ((x_world - origin[0]) / resolution).astype(int) 
+        y_map = ((y_world - origin[1]) / resolution).astype(int) 
     return x_map, y_map
 
 
-def path(state, goal, grid_map, map_resolution = 0.05, map_origin = (-4.86, -7.36)):
+def path(robot, grid_map, occupation_map, penalty_map,  map_resolution = 0.05, map_origin = (-7.76,-7.15)):
     
-    state_world = state # Текущая позиция в мировых координатах
-    goal_world = goal  # Цель в мировых координатах
+    state_world = world_to_map((robot.current_x, robot.current_y), 0.05, (-7.76,-7.15), (0,0), grid_map.shape)
+ # Текущая позиция в мировых координатах
+    goal_world = robot.goal  # Цель в мировых координатах
+    map_offset = (0, 0)  # Смещение координат
 
-    map_offset = (45, 15)  # Смещение координат
+    # map_offset = (45, 15)  # Смещение координат
     map_shape = grid_map.shape  # (высота, ширина) карты
 
-    state_pixel = world_to_map(state_world, map_resolution, map_origin, map_offset, map_shape)
+    # state_pixel = world_to_map(state_world, map_resolution, map_origin, map_offset, map_shape)
     goal_pixel = world_to_map(goal_world, map_resolution, map_origin, map_offset, map_shape)
     # print(goal_pixel)
 
     # print(state_pixel)
     # print(goal_pixel)
 
-    rrt_star = theta_star(state_pixel, goal_pixel, grid_map)
-    optimal_path = rrt_star.plan()
+    theta_star = ThetaStar()
+    optimal_path = theta_star.plan((state_world[1], state_world[0]), 
+                              (goal_pixel[1], goal_pixel[0]),
+                              grid_map, occupation_map, penalty_map)
     # print(optimal_path)
 
     # optimal_path = [map_to_world(p, map_resolution, map_origin) for p in optimal_path]
@@ -103,36 +99,40 @@ def path(state, goal, grid_map, map_resolution = 0.05, map_origin = (-4.86, -7.3
         print(optimal_path)
         
         # Визуализация результатов:
-        plt.figure(figsize=(8, 8))
-        plt.imshow(grid_map, cmap='gray')
+        # plt.figure(figsize=(8, 8))
+        # plt.imshow(grid_map, cmap='gray')
         
-        # Отрисовываем все узлы дерева
-        for node in rrt_star.node_list:
-            if node.parent is not None:
-                p1 = node.point
-                p2 = node.parent.point
-                plt.plot([p1[0], p2[0]], [p1[1], p2[1]], "-g")
+        # # Отрисовываем все узлы дерева
+        # for node in rrt_star.node_list:
+        #     if node.parent is not None:
+        #         p1 = node.point
+        #         p2 = node.parent.point
+        #         plt.plot([p1[0], p2[0]], [p1[1], p2[1]], "-g")
                 
         # Отрисовываем найденный путь
         path_x = [p[0] for p in optimal_path]
         path_y = [p[1] for p in optimal_path]
-        plt.plot(path_x, path_y, "-r", linewidth=2)
+        # plt.plot(path_x, path_y, "-r", linewidth=2)
         
-        plt.scatter(state_pixel[0], state_pixel[1], color="blue", s=100, label="Старт")
-        plt.scatter(goal_pixel[0], goal_pixel[1], color="magenta", s=100, label="Цель")
-        plt.legend()
-        plt.title("RRT*")
-        plt.show()
+        # plt.scatter(state_world[0], state_world[1], color="blue", s=100, label="Старт")
+        # plt.scatter(goal_pixel[0], goal_pixel[1], color="magenta", s=100, label="Цель")
+        # plt.legend()
+        # plt.title("Theta*")
+        # plt.show()
     return optimal_path
+
+
 
 # -------------------------------
 # Функция для расчёта отклонения от оптимального пути
 # -------------------------------
 def compute_deviation_from_path(current_pos, optimal_path):
-    path_points = np.array(optimal_path)
-    distances = np.linalg.norm(path_points - np.array(current_pos), axis=1)
-    min_distance = np.min(distances)
-    return min_distance
+    if optimal_path:
+        path_points = np.array(optimal_path)
+        distances = np.linalg.norm(path_points - np.array(current_pos), axis=1)
+        min_distance = np.min(distances)
+        return min_distance
+    return np.inf()
 
 def generate_potential_field(grid_map, goal, path_points, k_att=10.0, k_rep=30.0, d0=5.0, scale = 0.07):
     """
@@ -144,7 +144,6 @@ def generate_potential_field(grid_map, goal, path_points, k_att=10.0, k_rep=30.0
     height, width = grid_map.shape
     y_coords, x_coords = np.indices(grid_map.shape)
     obstacles = np.argwhere(grid_map == 1)
-
 
     # Притягивающее поле (quadratic attraction)
     dx = x_coords - goal[0]
@@ -175,40 +174,36 @@ def generate_potential_field(grid_map, goal, path_points, k_att=10.0, k_rep=30.0
 
     return field
 
-
-class TurtleBotEnv(Node, gym.Env):
-    def __init__(self):
-        super().__init__('turtlebot_env')
-        self.publisher_ = self.create_publisher(Twist, '/cmd_vel', 10)
-        self.subscription_odom = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
-        self.subscription_laser = self.create_subscription(LaserScan, '/scan', self.scan_callback, 10)
-        self.subscription_camera = self.create_subscription(Image, '/camera/image_raw', self.camera_callback, 10)
-        
+class Robot():
+    def __init__(self, namespace, state_pos, goal):
+        self.namespace = namespace
+        self.occupations = None
+        self.penalties = None
+        self.cmd_vel_pub = None
+        self.obstacle_detected = False
         self.bridge = CvBridge()
         self.camera_obstacle_detected = False
         self.lidar_obstacle_detected = False
+        self.path_marker_pub = None
         
-        self.target_x = -2.0
-        self.target_y = -6.0
-        self.goal = [self.target_x, self.target_y]
+        self.target_x = goal[0]
+        self.target_y = goal[1]
+        self.goal = goal
         
         self.x_range = [-10,10]
         self.y_range = [-10,10]
-        self.state_pose = [-2.0, -0.5]
+        self.state_pose = state_pos
 
-        slam_map = cv2.imread('map.pgm', cv2.IMREAD_GRAYSCALE)
-        self.grid_map = slam_to_grid_map(slam_map)
+        self.grid_map = None
         self.camera_history = deque(maxlen=20)  
 
-        self.optimal_path = path(self.state_pose, self.goal, self.grid_map)
-        self.potential_field = generate_potential_field(self.grid_map, world_to_map(self.goal, 0.05, (-4.86, -7.36), (45, 15), self.grid_map.shape), self.optimal_path)
-        self.show_potential_field() 
+        self.optimal_path = None
+        self.potential_field = None
         self.prev_potential = 0 
         self.prev_x = None  # Предыдущая координата X
         self.prev_y = None  # Предыдущая координата Y
         self.obstacle_count = 0  
         
-
         self.current_x = 0.0
         self.current_y = 0.0
         self.current_yaw = 0.0
@@ -218,107 +213,252 @@ class TurtleBotEnv(Node, gym.Env):
         self.max_steps = 5000
         self.steps = 0 
         self.recent_obstacles = []
+        self.state = np.array([])
+        self.reward = 0.0
+        self.done = False
+
+
+def costmap(data, width, height, resolution=0.05, expansion_size=4):
+    grid = np.array(data, dtype=np.int8).reshape(height, width)
+    
+    obstacles_mask = np.where(grid == 100, 255, 0).astype(np.uint8)
+    
+    kernel_size = 2 * expansion_size + 1
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
+    dilated_obstacles = cv2.dilate(obstacles_mask, kernel)
+    result = np.where(dilated_obstacles == 255, 100, grid)
+    result[grid == -1] = -1
+    return result.flatten().tolist()
+
+
+class TurtleBotEnv(Node, gym.Env):
+    def __init__(self):
+        super().__init__('turtlebot_env')
+        self.num_robots = 2
+        spawn_points = [[-0.7, 0.05], [-2.5, 0.05]]
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        goals = [[-2.5, 0.05],[-0.7, 0.05] ]
+        self.robots = [Robot(f"tb{i}", spawn_points[i], goals[i]) for i in range(self.num_robots)]
+        print(self.robots)
+        slam_map = cv2.imread(os.path.join(get_package_share_directory('theta_star'),
+                                           'maps','map3.pgm'), cv2.IMREAD_GRAYSCALE)
         
+  
+        self.grid_map = slam_to_grid_map(slam_map)
+
+        self.map_initialized = False
+        self.occupation_map = np.zeros_like(self.grid_map, dtype=np.float32)
+        self.penalty_map = np.zeros_like(self.grid_map, dtype=np.float32)
+        self.max_steps = 5000
+        qos_profile = QoSProfile(
+            depth=5,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            history=QoSHistoryPolicy.KEEP_LAST
+        )
+
+        self.gridmap_pub = self.create_publisher(OccupancyGrid, '/grid_costmap', qos_profile)
+        self.occupation_pub = self.create_publisher(OccupancyGrid, '/occupation_costmap', 10)
+        self.penalty_pub = self.create_publisher(OccupancyGrid, '/penalty_costmap', 10)
+        
+        for robot in self.robots:
+            robot.cmd_vel_pub = self.create_publisher(Twist, f'/{robot.namespace}/cmd_vel', 10)
+            
+            robot.path_marker_pub = self.create_publisher(
+                Marker, 
+                f'/{robot.namespace}/path_marker', 
+                10
+            )
+            self.create_subscription(
+                Odometry, 
+                f'/{robot.namespace}/odom', 
+                self.create_odom_callback(robot),
+
+                10
+            )
+            self.create_subscription(
+                LaserScan,
+                f'/{robot.namespace}/scan',
+                self.create_scan_callback(robot),
+                10
+            )
+
+            self.create_subscription(
+                Image,
+                f'/{robot.namespace}/camera/image_raw',
+                self.create_camera_callback(robot),
+                10
+            )
+            robot.optimal_path = path(robot, self.grid_map, self.occupation_map, self.penalty_map)
+
+            robot.potential_field = generate_potential_field(self.grid_map, world_to_map(robot.goal, 0.05, (-4.86, -7.36), (45, 15), self.grid_map.shape), robot.optimal_path)
+            self.show_potential_field(robot) 
+                    
+        self.x_range = [-10,10]
+        self.y_range = [-10,10]
         self.action_space = spaces.Discrete(3)  
-        self.observation_space = spaces.Box(low=np.array([-10.0, -10.0, -np.pi, 0.0]), 
-                                            high=np.array([10.0, 10.0, np.pi, 12.0]), 
-                                            shape=(4,), dtype=np.float32)
-        
+
+        self.observation_space = spaces.Box(
+            low=np.array([-10.0, -10.0, -np.pi, 0.0, 0.0, 0.0]),  
+            high=np.array([10.0, 10.0, np.pi, 12.0, 1.0, 1.0]),
+            shape=(6,),  
+            dtype=np.float32
+        )                       
+
         self.timer = self.create_timer(0.05, self._timer_callback)
+        self.costmap_timer = self.create_timer(1.0, self.publish_costmaps)
 
 
     def _timer_callback(self):
-        pass 
+        for robot in self.robots:
+            robot.optimal_path = path(robot, self.grid_map, self.occupation_map, self.penalty_map)
+            path_= self.get_path(robot.optimal_path)
+            self.visualize_path(robot, path_)
 
-    def odom_callback(self, msg):
-        self.current_x = msg.pose.pose.position.x
-        self.current_y = msg.pose.pose.position.y
-        orientation_q = msg.pose.pose.orientation
-        siny_cosp = 2.0 * (orientation_q.w * orientation_q.z + orientation_q.x * orientation_q.y)
-        cosy_cosp = 1.0 - 2.0 * (orientation_q.y * orientation_q.y + orientation_q.z * orientation_q.z)
-        self.current_yaw = math.atan2(siny_cosp, cosy_cosp)
+    def get_path(self, opt_path):
+        path = [grid_to_world(i[1], i[0]) for i in opt_path]
+        return path
+
+    def update_dynamic_maps(self):
+        for robot in self.robots:
+            x, y = world_to_map(
+                (robot.current_x, robot.current_y),
+                resolution=0.05,
+                origin=(-7.76, -7.15),
+                map_offset=(0, 0),
+                map_shape=self.grid_map.shape
+            )
+            self.occupation_map[y][x] += 0.1
+            self.penalty_map[y][x] = self.calculate_dynamic_penalty(x, y)
+
+    def get_observations(self):
+        observations = []
+        for robot in self.robots:
+            x, y = world_to_map(
+                (robot.current_x, robot.current_y),
+                resolution=0.05,
+                origin=(-7.76, -7.15),
+                map_offset=(0, 0),
+                map_shape=self.grid_map.shape
+            )
+            
+            dynamic_cost = self.occupation_map[y][x]
+            penalty = self.penalty_map[y][x]
+            
+            obs = np.concatenate([
+                robot.state,
+                [dynamic_cost / 10.0, penalty / 5.0]  
+            ])
+            observations.append(obs)
+        return observations
+    
+    def calculate_dynamic_penalty(self, x, y):
+        penalty = 0.0
+        for other in self.robots:
+            ox, oy = world_to_map(
+                (other.current_x, other.current_y),
+                resolution=0.05,
+                origin=(-7.76, -7.15),
+                map_offset=(0, 0),
+                map_shape=self.grid_map.shape
+            )
+            distance = np.hypot(x - ox, y - oy)
+            penalty += 1.0 / (distance + 1e-5)
+        return min(penalty, 5.0)
+    
+    def create_odom_callback(self, robot):
+        def callback(msg):
+            robot.current_x = msg.pose.pose.position.x
+            robot.current_y = msg.pose.pose.position.y
+            orientation_q = msg.pose.pose.orientation
+            robot.current_yaw = euler_from_quaternion(orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w)
+        return callback
 
     # def scan_callback(self, msg):
         # self.obstacles = [r if not math.isinf(r) and not math.isnan(r) and msg.range_min < r < msg.range_max else msg.range_max for r in msg.ranges]
     
-    def scan_callback(self, msg):
-        raw_obstacles = [r if not math.isinf(r) and not math.isnan(r) and msg.range_min < r < msg.range_max 
-                        else msg.range_max for r in msg.ranges]
+    def create_scan_callback(self, robot):
+        def callback(msg):
+            raw_obstacles = [r if not math.isinf(r) and not math.isnan(r) and msg.range_min < r < msg.range_max 
+                            else msg.range_max for r in msg.ranges]
 
-        self.obstacles = raw_obstacles
-        min_obstacle_dist = min(raw_obstacles) if raw_obstacles else msg.range_max
-        logger.info(f'Min obstacle dist: {min_obstacle_dist}') 
+            robot.obstacles = raw_obstacles
+            min_obstacle_dist = min(raw_obstacles) if raw_obstacles else msg.range_max
+            logger.info(f'Min obstacle dist: {min_obstacle_dist}') 
 
-        # Конвертация координат
-        current_x, current_y = world_to_map(
-            (self.current_x, self.current_y),
-            resolution=0.05,
-            origin=(-4.86, -7.36),
-            map_offset=(45, 15),
-            map_shape=self.grid_map.shape
-        )
-
-        logger.info(f'Current_x, current_y: {current_x, current_y}') 
-        # Получаем значение поля
-        if 0 <= current_x < self.grid_map.shape[1] and 0 <= current_y < self.grid_map.shape[0]:
-            potential_value = self.potential_field[current_y, current_x]
-            # print(f'Potential value: {potential_value}')
-            logger.info(f'Potential value: {potential_value}') 
-        else:
-            potential_value = 1
-
-        # Проверяем, было ли препятствие на большинстве последних кадров
-        camera_obstacle_count = sum(self.camera_history)  # Считаем количество True
-        camera_obstacle_threshold = 12  
-
-        # Если LiDAR видит препятствие вблизи
-        if min_obstacle_dist < 0.2:
-            # Принудительно увеличиваем потенциал в случае обнаружения препятствия
-            potential_value = max(potential_value, np.percentile(self.potential_field, 90))
-    
-        # Логика определения препятствий
-        self.lidar_obstacle_detected = (
-            (min_obstacle_dist < 0.2) and (  # Лидар обнаружил близкое препятствие И
-                (potential_value > 3) or  # Более чувствительный порог
-                # (potential_value > np.percentile(self.potential_field, 90)) or  # Высокий потенциал
-                (camera_obstacle_count >= camera_obstacle_threshold)  # Камера часто видела препятствие
+            # Конвертация координат
+            current_x, current_y = world_to_map(
+                (robot.current_x, robot.current_y),
+                resolution=0.05,
+                origin=(-7.76, -7.15),
+                map_offset=(0, 0),
+                map_shape=self.grid_map.shape
             )
-        )
-        self.recent_obstacles.append(self.lidar_obstacle_detected)
-        if len(self.recent_obstacles) > 5:  # Храним только 5 последних значений
-            self.recent_obstacles.pop(0)
 
-        # Если хотя бы 3 из 5 последних измерений показали препятствие — считаем его подтверждённым
-        if sum(self.recent_obstacles) >= 3:
-            self.lidar_obstacle_detected = True
-
-        logger.info(f'Detect of obstacle: {self.lidar_obstacle_detected}') 
-
-    def camera_callback(self, msg):
-        try:
-            cv_image = self.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
-            if cv_image is not None:
-                detected = self.process_camera_image(cv_image)
-                self.camera_obstacle_detected = detected
-                self.camera_history.append(detected)  # Добавляем в историю
+            logger.info(f'Current_x, current_y: {current_x, current_y}') 
+            # Получаем значение поля
+            if 0 <= current_x < self.grid_map.shape[1] and 0 <= current_y < self.grid_map.shape[0]:
+                potential_value = robot.potential_field[current_y, current_x]
+                # print(f'Potential value: {potential_value}')
+                logger.info(f'Potential value: {potential_value}') 
             else:
-                self.camera_obstacle_detected = False
-                self.camera_history.append(False)
-        except Exception as e:
-            self.get_logger().error(f"Error processing image: {e}")
-            self.camera_obstacle_detected = False
-            self.camera_history.append(False)
-    
-    def show_potential_field(self):
+                potential_value = 1
 
-        goal_pixel = world_to_map(self.goal, resolution=0.05, origin=(-4.86, -7.36), map_offset=(45, 15),map_shape=self.grid_map.shape)
-        plt.figure(figsize=(10, 8))
-        plt.imshow(self.potential_field, cmap='jet')
-        plt.colorbar(label='Potential')
-        plt.scatter(goal_pixel[0], goal_pixel[1], c='green', s=200, marker='*', label='Goal')
-        plt.title("Potential Field Visualization")
-        plt.legend()
-        plt.show()
+            # Проверяем, было ли препятствие на большинстве последних кадров
+            camera_obstacle_count = sum(robot.camera_history)  # Считаем количество True
+            camera_obstacle_threshold = 12  
+
+            # Если LiDAR видит препятствие вблизи
+            if min_obstacle_dist < 0.2:
+                # Принудительно увеличиваем потенциал в случае обнаружения препятствия
+                potential_value = max(potential_value, np.percentile(robot.potential_field, 90))
+        
+            # Логика определения препятствий
+            robot.lidar_obstacle_detected = (
+                (min_obstacle_dist < 0.2) and (  # Лидар обнаружил близкое препятствие И
+                    (potential_value > 3) or  # Более чувствительный порог
+                    # (potential_value > np.percentile(self.potential_field, 90)) or  # Высокий потенциал
+                    (camera_obstacle_count >= camera_obstacle_threshold)  # Камера часто видела препятствие
+                )
+            )
+            robot.recent_obstacles.append(robot.lidar_obstacle_detected)
+            if len(robot.recent_obstacles) > 5:  # Храним только 5 последних значений
+                robot.recent_obstacles.pop(0)
+
+            # Если хотя бы 3 из 5 последних измерений показали препятствие — считаем его подтверждённым
+            if sum(robot.recent_obstacles) >= 3:
+                robot.lidar_obstacle_detected = True
+
+            logger.info(f'Detect of obstacle: {robot.lidar_obstacle_detected}') 
+        return callback
+    
+    def create_camera_callback(self, robot):
+        def callback(msg):
+            try:
+                cv_image = robot.bridge.imgmsg_to_cv2(msg, desired_encoding="bgr8")
+                if cv_image is not None:
+                    detected = self.process_camera_image(cv_image)
+                    robot.camera_obstacle_detected = detected
+                    robot.camera_history.append(detected)  # Добавляем в историю
+                else:
+                    robot.camera_obstacle_detected = False
+                    robot.camera_history.append(False)
+            except Exception as e:
+                self.get_logger().error(f"Error processing image: {e}")
+                robot.camera_obstacle_detected = False
+                robot.camera_history.append(False)
+        return callback
+        
+    def show_potential_field(self, robot):
+
+        goal_pixel = world_to_map(robot.goal, resolution=0.05, origin=(-7.76, -7.15), map_offset=(0, 0),map_shape=self.grid_map.shape)
+        # plt.figure(figsize=(10, 8))
+        # plt.imshow(robot.potential_field, cmap='jet')
+        # plt.colorbar(label='Potential')
+        # plt.scatter(goal_pixel[0], goal_pixel[1], c='green', s=200, marker='*', label='Goal')
+        # plt.title("Potential Field Visualization")
+        # plt.legend()
+        # plt.show()
 
     def process_camera_image(self, cv_image):
    
@@ -341,77 +481,115 @@ class TurtleBotEnv(Node, gym.Env):
         # print(obstacle_detected)
         return obstacle_detected
     
+    # def get_next_state(self, state, action, angle):
+    #     """
+    #     Предсказывает следующее состояние на основе текущего состояния, действия и переданного угла.
+
+    #     :param state: текущее состояние [x, y, min_obstacle_dist] (без угла)
+    #     :param action: выбранное действие (0 - поворот вправо, 1 - движение вперёд, 2 - поворот влево)
+    #     :param angle: текущий угол робота (передаётся отдельно)
+    #     :return: следующее состояние [next_x, next_y, next_min_obstacle_dist], next_angle
+    #     """
+    #     current_x, current_y, _, min_obstacle_dist = state.squeeze()  # Распаковываем текущее состояние
+    #     next_x, next_y = current_x, current_y  # По умолчанию остаются неизменными
+    #     next_angle = angle # Начинаем с текущего угла
+    #     logger.info(f'Next_angel in get_next_state (current_yaw): {next_angle}') 
+    #     # print(next_angle)
+    #     # Определяем действие
+    #     if action == 0:  # Поворот вправо
+    #         next_angle = angle - 0.5  
+    #     elif action == 1:  # Движение вперёд
+    #         if not (self.x_range[0] <= next_x <= self.x_range[1] and self.y_range[0] <= next_y <= self.y_range[1]):
+    #             next_x, next_y = current_x, current_y  # Оставляем на местея
+    #         else:
+    #             next_x = current_x + np.cos(angle) * 0.2  # Двигаемся в направлении угла
+    #             next_y = current_y + np.sin(angle) * 0.2
+    #     elif action == 2:  
+    #         next_angle = angle + 0.5  # Увеличиваем угол
+
+    #     # Ограничиваем угол в диапазоне [-π, π]
+    #     next_angle = (next_angle + np.pi) % (2 * np.pi) - np.pi
+
+    #     # min_obstacle_dist остаётся прежним (или можно пересчитывать)
+    #     return np.array([next_x, next_y, next_angle, min_obstacle_dist], dtype=np.float32)
     def get_next_state(self, state, action, angle):
         """
-        Предсказывает следующее состояние на основе текущего состояния, действия и переданного угла.
-
-        :param state: текущее состояние [x, y, min_obstacle_dist] (без угла)
-        :param action: выбранное действие (0 - поворот вправо, 1 - движение вперёд, 2 - поворот влево)
-        :param angle: текущий угол робота (передаётся отдельно)
-        :return: следующее состояние [next_x, next_y, next_min_obstacle_dist], next_angle
+        Предсказывает следующее состояние на основе текущего состояния, действия и угла.
+        :param state: текущее состояние [x, y, angle_diff, min_obstacle_dist, dynamic_cost, penalty]
+        :param action: выбранное действие (0-2)
+        :param angle: текущий угол робота (yaw)
+        :return: следующее состояние и угол
         """
-        current_x, current_y, _, min_obstacle_dist = state.squeeze()  # Распаковываем текущее состояние
-        next_x, next_y = current_x, current_y  # По умолчанию остаются неизменными
-        next_angle = angle # Начинаем с текущего угла
-        logger.info(f'Next_angel in get_next_state (current_yaw): {next_angle}') 
-        # print(next_angle)
-        # Определяем действие
+        # Распаковываем только необходимые компоненты состояния
+        current_x = state[0]
+        current_y = state[1]
+        angle_diff = state[2]
+        min_obstacle_dist = state[3]
+        
+        next_x, next_y = current_x, current_y
+        next_angle = angle
+        
+        # Остальная логика обработки действия...
         if action == 0:  # Поворот вправо
-            next_angle = angle - 0.5  
-        elif action == 1:  # Движение вперёд
-            if not (self.x_range[0] <= next_x <= self.x_range[1] and self.y_range[0] <= next_y <= self.y_range[1]):
-                next_x, next_y = current_x, current_y  # Оставляем на местея
-            else:
-                next_x = current_x + np.cos(angle) * 0.2  # Двигаемся в направлении угла
-                next_y = current_y + np.sin(angle) * 0.2
-        elif action == 2:  
-            next_angle = angle + 0.5  # Увеличиваем угол
+            next_angle = angle - 0.5
+        elif action == 1:  # Вперёд
+            next_x = current_x + np.cos(angle) * 0.2
+            next_y = current_y + np.sin(angle) * 0.2
+        elif action == 2:  # Поворот влево
+            next_angle = angle + 0.5
 
-        # Ограничиваем угол в диапазоне [-π, π]
         next_angle = (next_angle + np.pi) % (2 * np.pi) - np.pi
-
-        # min_obstacle_dist остаётся прежним (или можно пересчитывать)
-        return np.array([next_x, next_y, next_angle, min_obstacle_dist], dtype=np.float32)
-
-    def compute_potential_reward(self, state, goal, intermediate_points, obstacle_detected, k_att=10.0, k_rep=30.0, d0=5.0, lam=0.5):
-        current_x, current_y, _, min_obstacle_dist = state
-
+        
+        # Сохраняем остальные компоненты состояния без изменений
+        return np.array([
+            next_x,
+            next_y,
+            angle_diff,  # Обновить при необходимости
+            min_obstacle_dist,
+            state[4],    # dynamic_cost
+            state[5]     # penalty
+        ], dtype=np.float32)
+    def compute_potential_reward(self, intermediate_points, obstacle_detected, robot, k_att=10.0, k_rep=30.0, d0=5.0, lam=0.5):
+        current_x = robot.state[0]
+        current_y = robot.state[1]
+        angle_diff = robot.state[2]
+        min_obstacle_dist = robot.state[3]
         # Преобразуем координаты в пиксельные
         current_x, current_y = world_to_map(
-            (current_x, current_y),
+            (robot.current_x, robot.current_y),
             resolution=0.05,
-            origin=(-4.86, -7.36),
-            map_offset=(45, 15),
+            origin=(-7.76, -7.15),
+            map_offset=(0, 0),
             map_shape=self.grid_map.shape
         )
 
-        goal_x, goal_y = world_to_map(goal, 0.05, (-4.86, -7.36), (45, 15), self.grid_map.shape)
+        goal_x, goal_y = world_to_map(robot.goal, 0.05, (-4.86, -7.36), (45, 15), self.grid_map.shape)
 
-        potential_value = self.potential_field[current_y, current_x] 
-        delta_potential = self.prev_potential - potential_value
+        potential_value = robot.potential_field[current_y, current_x] 
+        delta_potential = robot.prev_potential - potential_value
         R_potential = np.clip(-delta_potential, -1.0, 1.0)
-        self.prev_potential = potential_value
+        robot.prev_potential = potential_value
 
         # === Притяжение к промежуточной точке ===
         R_intermediate = 0.0
-        if self.prev_x is None or self.prev_y is None:
-            self.prev_x, self.prev_y = current_x, current_y
+        if robot.prev_x is None or robot.prev_y is None:
+            robot.prev_x, robot.prev_y = current_x, current_y
 
         if intermediate_points:
             nearest_intermediate = min(intermediate_points, key=lambda p: np.linalg.norm([current_x - p[0], current_y - p[1]]))
-            prev_dist = np.linalg.norm([self.prev_x - nearest_intermediate[0], self.prev_y - nearest_intermediate[1]])
+            prev_dist = np.linalg.norm([robot.prev_x - nearest_intermediate[0], robot.prev_y - nearest_intermediate[1]])
             curr_dist = np.linalg.norm([current_x - nearest_intermediate[0], current_y - nearest_intermediate[1]])
             R_intermediate = np.clip(k_att * (prev_dist - curr_dist), -1.0, 1.0)
 
         # === Градиент к цели ===
-        motion_direction = np.array([np.cos(self.current_yaw), np.sin(self.current_yaw)])
+        motion_direction = np.array([np.cos(robot.current_yaw), np.sin(robot.current_yaw)])
         direction_to_goal = np.array([goal_x - current_x, goal_y - current_y])
         norm = np.linalg.norm(direction_to_goal)
         direction_to_goal = direction_to_goal / norm if norm > 0 else np.array([1.0, 0.0])
         projection = np.dot(motion_direction, direction_to_goal)
         grad_reward = np.clip(lam * projection, -1.0, 1.0)
 
-        if self.lidar_obstacle_detected and projection < 0:
+        if robot.lidar_obstacle_detected and projection < 0:
             grad_reward -= 2.0
 
         # === Отталкивающее поле ===
@@ -422,7 +600,7 @@ class TurtleBotEnv(Node, gym.Env):
 
         # === Штраф за ложный путь ===
         R_fake_path = 0.0
-        if self.lidar_obstacle_detected and (potential_value - self.prev_potential > 0.2 or potential_value == self.prev_potential):
+        if robot.lidar_obstacle_detected and (potential_value - robot.prev_potential > 0.2 or potential_value == robot.prev_potential):
             R_fake_path = -5.0
 
         # === Суммарная награда ===
@@ -438,23 +616,27 @@ class TurtleBotEnv(Node, gym.Env):
         # === Логгирование ===
         logger.info(f"R_potential: {R_potential:.2f}, R_intermediate: {R_intermediate:.2f}, grad: {grad_reward:.2f}, rep: {R_repulsive:.2f}, fake: {R_fake_path:.2f}, total: {total_reward:.2f}")
 
-        self.prev_x, self.prev_y = current_x, current_y
+        robot.prev_x, robot.prev_y = current_x, current_y
         return total_reward
 
     
-    def compute_deviation_from_path(self, current_pos):
+    def compute_deviation_from_path(self, robot, current_pos):
         """
         Вычисляет минимальное расстояние от текущей позиции агента до оптимального пути.
         :param current_pos: (x, y) текущая позиция агента.
         :param optimal_path: список точек пути [(x1, y1), (x2, y2), ...]
         :return: минимальное расстояние до пути (скаляр).
         """
-        path_points = np.array(self.optimal_path)
-        distances = np.linalg.norm(path_points - np.array(current_pos), axis=1)
-        min_distance = np.min(distances)
-        return min_distance
+        if robot.optimal_path:
+            path_points = np.array(robot.optimal_path)
+            distances = np.linalg.norm(path_points - np.array(current_pos), axis=1)
+            min_distance = np.min(distances)
+            return min_distance
+        return np.inf()
 
-    def get_deviation_penalty(self, current_pos, max_penalty=10):
+
+
+    def get_deviation_penalty(self, current_pos, robot, max_penalty=10):
         """
         Рассчитывает штраф за отклонение от пути.
         :param current_pos: (x, y) текущая позиция агента.
@@ -465,87 +647,112 @@ class TurtleBotEnv(Node, gym.Env):
         if current_pos.ndim == 2 and current_pos.shape[0] == 1:
             current_pos = current_pos[0]
 
-        state = world_to_map(current_pos, resolution = 0.05, origin = (-4.86, -7.36),  map_offset = (45, 15), map_shape = self.grid_map.shape)
+        state = world_to_map(current_pos, resolution = 0.05, origin = (-7.76, -7.15),  map_offset = (0, 0), map_shape = self.grid_map.shape)
         
-        deviation = self.compute_deviation_from_path(state)
+        deviation = self.compute_deviation_from_path(robot, state)
         
         # Можно сделать штраф линейным или экспоненциальным в зависимости от задачи
         penalty = -min(max_penalty, deviation*1.5)  # Чем дальше от пути, тем больше штраф
         return penalty
-
-    def step(self, action):
-        cmd_msg = Twist()
-        if action == 0:
-            cmd_msg.angular.z = 0.5  
-        elif action == 1:
-            cmd_msg.linear.x = 0.2  
-        elif action == 2:
-            cmd_msg.angular.z = -0.5  
-        
-        rclpy.spin_once(self, timeout_sec=0.1) 
-        self.publisher_.publish(cmd_msg)
+    def compute_collision_penalty(self, robot1, robot2):
+        distance = np.sqrt((robot1.current_x - robot2.current_x)**2 + 
+                        (robot1.current_y - robot2.current_y)**2)
+        if distance < 0.5:  # Безопасная дистанция
+            return -50 * (0.5 - distance)
+        return 0
     
-        self.steps += 1
+    def step(self, actions):
+        states, rewards, dones = [], [], []
+        self.update_dynamic_maps()
+
+        for robot, action in zip(self.robots, actions):
+            cmd_msg = Twist()
+            if action == 0:
+                cmd_msg.angular.z = 0.5
+            elif action == 1:
+                cmd_msg.linear.x = 0.2
+            elif action == 2:
+                cmd_msg.angular.z = -0.5
+            robot.cmd_vel_pub.publish(cmd_msg)
         
-        # print(self.obstacles)
-        distance = math.sqrt((self.target_x - self.current_x) ** 2 + (self.target_y - self.current_y) ** 2)
-        angle_to_goal = math.atan2(self.target_y - self.current_y, self.target_x - self.current_x)
-        angle_diff = (angle_to_goal - self.current_yaw + np.pi) % (2 * np.pi) - np.pi
-
-        min_obstacle_dist = min(self.obstacles) if self.obstacles else 3.5
-
-        obstacle_detected = self.lidar_obstacle_detected or self.camera_obstacle_detected
-        state = np.array([
-            self.current_x,
-            self.current_y,
-            angle_diff,
-            min_obstacle_dist])
-
-        # distance_rate = (self.past_distance - distance)
-        # print(min_obstacle_dist)
-        reward_potent_val = self.compute_potential_reward(state, self.goal, self.optimal_path, obstacle_detected)
-        reward_optimal_path = self.get_deviation_penalty(state[:2])
-
-        reward = reward_potent_val + reward_optimal_path
-        # reward += 50.0 * distance_rate
-        # self.past_distance = distance
-        # print(obstacle_detected)
-        done = False
-
-        # Обнаружено препятствие
-        if obstacle_detected:
-            self.obstacle_count += 1
-            reward -= 50  # менее агрессивно
-            if self.obstacle_count >= 1000:
-                done = True
-                self.obstacle_count = 0
-                print("Episode terminated due to repeated obstacle detection")
-
-        # Очень близко к препятствию
-        if min_obstacle_dist < 0.4:
-            reward -= 20 * (0.5 - min_obstacle_dist)
-
-        # Достигли цели
-        if distance < 0.3:
-            reward += 200
-            done = True
-
-        # Превышен лимит шагов
-        if self.steps >= self.max_steps:
-            reward -= 100
-            done = True
+            rclpy.spin_once(self, timeout_sec=0.1) 
         
-        return state, reward, done, {}
+            robot.steps += 1
+            
+            # print(self.obstacles)
 
-    def reset(self):
-    # Остановить движение
+            distance = math.sqrt((robot.target_x - robot.current_x) ** 2 + (robot.target_y - robot.current_y) ** 2)
+            angle_to_goal = math.atan2(robot.target_y - robot.current_y, robot.target_x - robot.current_x)
+            angle_diff = (angle_to_goal - robot.current_yaw + np.pi) % (2 * np.pi) - np.pi
+
+            min_obstacle_dist = min(robot.obstacles) if robot.obstacles else 3.5
+
+            obstacle_detected = robot.lidar_obstacle_detected or robot.camera_obstacle_detected
+            robot.state = np.array([
+                robot.current_x,
+                robot.current_y,
+                angle_diff,
+                min_obstacle_dist])
+
+            states.append(robot.state)
+
+            # distance_rate = (self.past_distance - distance)
+            # print(min_obstacle_dist)
+            robot.optimal_path = path(robot, self.grid_map, self.occupation_map, self.penalty_map)
+
+            reward_potent_val = self.compute_potential_reward(robot.optimal_path, obstacle_detected, robot)
+            reward_optimal_path = self.get_deviation_penalty(robot.state[:2], robot)
+
+            robot.reward = reward_potent_val + reward_optimal_path
+            # reward += 50.0 * distance_rate
+            # self.past_distance = distance
+            # print(obstacle_detected)
+            robot.done = False
+
+            # Обнаружено препятствие
+            if obstacle_detected:
+                robot.obstacle_count += 1
+                robot.reward -= 50  # менее агрессивно
+                if robot.obstacle_count >= 1000:
+                    robot.done = True
+                    robot.obstacle_count = 0
+                    print("Episode terminated due to repeated obstacle detection")
+
+            # Очень близко к препятствию
+            if min_obstacle_dist < 0.4:
+                robot.reward -= 20 * (0.5 - min_obstacle_dist)
+
+            # Достигли цели
+            if distance < 0.3:
+                robot.reward += 200
+                robot.done = True
+
+            # Превышен лимит шагов
+            if robot.steps >= robot.max_steps:
+                robot.reward -= 100
+                robot.done = True
+
+            collision_penalty = self.compute_collision_penalty(self.robots[0], self.robots[1])
+            rewards = [r + collision_penalty for r in rewards]
+            
+            # Условие завершения при столкновении
+            if collision_penalty < -10:
+                dones = [True, True]
+            
+
+            rewards.append(robot.reward)
+            dones = [robot.done for robot in self.robots]
+
+        return self.get_observations(), rewards, all(dones), {}
+
+    def reset_state(self, robot, cur_pos):
+        cur_x, cur_y = cur_pos
         cmd_msg = Twist()
         cmd_msg.linear.x = 0.0  
         cmd_msg.angular.z = 0.0
-        self.publisher_.publish(cmd_msg)  
+        robot.cmd_vel_pub.publish(cmd_msg)  
         rclpy.spin_once(self, timeout_sec=0.1) 
     
-        # Использовать reset_simulation для физического сброса в Gazebo
         client = self.create_client(Empty, '/reset_simulation')
         request = Empty.Request()
         if client.wait_for_service(timeout_sec=1.0):
@@ -553,16 +760,106 @@ class TurtleBotEnv(Node, gym.Env):
         else:
             self.get_logger().warn('Gazebo reset service not available!')
 
-    # Сбросить внутренние переменные
-        self.current_x = -2.0
-        self.current_y = -0.5
-        self.current_yaw = 0.0
-        self.steps = 0
-        self.prev_distance = None
-        self.obstacles = []
-        self.camera_obstacle_detected = False
-        return np.array([self.current_x, self.current_y, 0.0, 0.0])  
- 
+        robot.current_x = cur_x
+        robot.current_y = cur_y
+        robot.current_yaw = 0.0
+        robot.steps = 0
+        robot.prev_distance = None
+        robot.obstacles = []
+        robot.camera_obstacle_detected = False
+
+        return np.array([robot.current_x, robot.current_y, 0.0, 0.0])
+    
+    def reset(self):
+        states = []
+        spawn_points = [[-0.7, 0.05], [4.0, 0.05]]
+        for i, robot in enumerate(self.robots):
+            robot.state = self.reset_state(robot, spawn_points[i])
+        for robot in self.robots:
+            x, y = world_to_map(
+                (robot.current_x, robot.current_y),
+                resolution=0.05,
+                origin=(-7.76, -7.15),
+                map_offset=(0, 0),
+                map_shape=self.grid_map.shape
+            )
+                
+            dynamic_cost = self.occupation_map[y][x]
+            penalty = self.penalty_map[y][x]
+                
+            robot.state = np.concatenate([
+                robot.state,
+                [dynamic_cost / 10.0, penalty / 5.0]  
+                ])
+            states.append(robot.state)
+        return states
+    
+    def visualize_path(self, robot, path):
+        path_marker = Marker()
+        path_marker.header.frame_id = "map"
+        path_marker.header.stamp = self.get_clock().now().to_msg()
+        path_marker.ns = f"{robot.namespace}_path"
+        path_marker.id = 0
+        path_marker.type = Marker.LINE_STRIP
+        path_marker.action = Marker.ADD
+        path_marker.scale.x = 0.05 
+        path_marker.color.a = 1.0
+        path_marker.color.g = 1.0  
+        path_marker.color.r = 0.0
+        path_marker.color.b = 0.0
+        for (x, y) in path:
+            p = Point()
+            p.x = x
+            p.y = y
+            p.z = 0.0
+            path_marker.points.append(p)
+        robot.path_marker_pub.publish(path_marker)
+
+    def publish_costmaps(self):
+        self.publish_grid_map()
+        # self.publish_occupation_map()
+        # self.publish_penalty_map()
+
+    def publish_grid_map(self):
+        if self.grid_map is None:
+            return
+        
+        map_a_msg_pose = Pose()
+        map_a_msg_pose.position.x = -7.76
+        map_a_msg_pose.position.y = -7.15
+        map_a_msg_pose.position.z = 0.0
+
+        msg = OccupancyGrid(
+            header = Header(stamp = self.get_clock().now().to_msg(), frame_id="map"), 
+            info = MapMetaData(width=self.grid_map.shape[1], height=self.grid_map.shape[0], resolution=0.05, map_load_time= self.get_clock().now().to_msg(), origin=map_a_msg_pose)
+        )        
+        for i in range(0,self.grid_map.shape[0]):
+            for j in range(0,self.grid_map.shape[1]):
+                msg.data.append(int(self.grid_map[i][j] * 50))
+        
+        self.gridmap_pub.publish(msg)
+
+    def publish_occupation_map(self):
+        msg = OccupancyGrid()
+        msg.header = Header(stamp=self.get_clock().now().to_msg(), frame_id="map")
+        
+        occupation_data = np.clip(self.occupation_map * 10, 0, 100).astype(np.int8)
+        
+        msg.info = self.gridmap_pub.info
+        msg.data = occupation_data.flatten().tolist()
+        self.occupation_pub.publish(msg)
+
+    def publish_penalty_map(self):
+        msg = OccupancyGrid()
+        msg.header = Header(stamp=self.get_clock().now().to_msg(), frame_id="map")
+        
+        penalty_data = np.clip(self.penalty_map * 20, 0, 100).astype(np.int8)
+        
+        msg.info = self.gridmap_pub.info
+        msg.data = penalty_data.flatten().tolist()
+        self.penalty_pub.publish(msg)
+
+
     def render(self, mode='human'):
         pass
 
