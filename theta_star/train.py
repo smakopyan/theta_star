@@ -1,23 +1,25 @@
-import gym
 import numpy as np
 import tensorflow as tf
-# from tensorflow import kears
 from keras import layers
 import rclpy
 from turtlebot_env import TurtleBotEnv
 from critic import ImprovedCritic, StaticCritic, world_to_map
 from actor import ImprovedActor
-##from my_turtlebot_package.config import TARGET_X, TARGET_Y
 import cv2
 import matplotlib.pyplot as plt
 from scipy.ndimage import distance_transform_edt
 import logging
 import signal
 import sys
+import traceback
+
 
 
 logging.basicConfig(filename='training_logs.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+logging.basicConfig(filename='reward_logs.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger2 = logging.getLogger(__name__)
 
 def precompute_value_map(grid_map, optimal_path, goal, path_weight = 5.0, obstacle_weight=10.0, goal_weight = 4.0):
         """ Заполняем таблицу значений критика для всех точек grid_map """
@@ -295,6 +297,7 @@ class PPOAgent:
             print("Episode: ",episode)
             logger.info('\n----------------------------------------------------------------------------')
             logger.info(f'Episode {episode}')
+            logger2.info(f'Episode {episode}')
 
             states = self.env.reset()
             episode_rewards = [0] * num_robots
@@ -342,7 +345,7 @@ class PPOAgent:
                 states = next_states
                 step += 1
 
-                done = all(dones) or (step >= self.env.max_steps)
+                done = any(dones) or (step >= self.env.max_steps)
                 if done or step % batch_size == 0:
                     advantages, returns = self.compute_advantages(
                         [batch_data[i]['rewards'] for i in range(self.num_robots)],
@@ -370,7 +373,11 @@ class PPOAgent:
             print(f"  Robot 1 Reward: {episode_rewards[0]:.2f}")
             print(f"  Robot 2 Reward: {episode_rewards[1]:.2f}")
             print(f"  Average Reward: {avg_reward:.2f}")
-            print("="*50)
+            logger2.info(f"Episode {episode+1}/{max_episodes}")
+            logger2.info(f"  Robot 1 Reward: {episode_rewards[0]:.2f}")
+            logger2.info(f"  Robot 2 Reward: {episode_rewards[1]:.2f}")
+            logger2.info(f"  Average Reward: {avg_reward:.2f}")
+            logger2.info("="*50)
 
         for i in range(self.num_robots):
             self.actors[i].save(f'ppo_actor_robot_{i}.keras')
@@ -396,7 +403,12 @@ def main(args=None):
     except KeyboardInterrupt:
         print("\nTraining interrupted. Saving models...")
         agent.save_models()
-    finally:
+    except Exception as e:  
+        print(f"\nCritical error occurred: {str(e)}", file=sys.stderr)
+        agent.save_models()
+
+        traceback.print_exc()  # Печать трейса ошибки
+    finally: 
         rclpy.shutdown()
 if __name__ == '__main__':
     main()

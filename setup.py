@@ -17,7 +17,7 @@ setup(
                                              'maps/map3.yaml', 'maps/map3.pgm',
                                              'maps/map.yaml', 'maps/map.pgm',
                                              "maps/turtlebot3_map.yaml", "maps/turtlebot3_map.pgm"]),
-        ('share/' + package_name + '/rviz', ['rviz/multi_robot_view.rviz', 'rviz/single_robot_view.rviz']),
+        ('share/' + package_name + '/rviz', ['rviz/multi_robot_view.rviz','rviz/multi_robot_view_train.rviz', 'rviz/single_robot_view.rviz']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
