@@ -55,16 +55,25 @@ def world_to_map(world_coords, resolution, origin, map_offset, map_shape):
     """
     x_world, y_world = world_coords
 
-    # Для одиночных значений (не массивов)
-    if not isinstance(x_world, np.ndarray):
-        x_map = int((x_world - origin[0]) / resolution) 
-        y_map = int((y_world - origin[1]) / resolution) 
+    # Обработка массивов и одиночных значений
+    if isinstance(x_world, np.ndarray):
+        x_map = ((x_world - origin[0]) / resolution).astype(int) + map_offset[0]
+        y_map = ((y_world - origin[1]) / resolution).astype(int) + map_offset[1]
     else:
-        # Для массивов
-        x_map = ((x_world - origin[0]) / resolution).astype(int) 
-        y_map = ((y_world - origin[1]) / resolution).astype(int) 
-    return x_map, y_map
+        x_map = int((x_world - origin[0]) / resolution) + map_offset[0]
+        y_map = int((y_world - origin[1]) / resolution) + map_offset[1]
 
+    # Переворачиваем Y, если SLAM-карта инвертирована
+    if isinstance(y_map, np.ndarray):
+        y_map = map_shape[0] - y_map - 1
+        x_map = np.clip(x_map, 0, map_shape[1] - 1)
+        y_map = np.clip(y_map, 0, map_shape[0] - 1)
+    else:
+        y_map = map_shape[0] - y_map - 1
+        x_map = max(0, min(x_map, map_shape[1] - 1))
+        y_map = max(0, min(y_map, map_shape[0] - 1))
+
+    return x_map, y_map
 
 def path(robot, grid_map, occupation_map, penalty_map,  map_resolution = 0.05, map_origin = (-7.76,-7.15)):
     
@@ -84,8 +93,8 @@ def path(robot, grid_map, occupation_map, penalty_map,  map_resolution = 0.05, m
     # print(goal_pixel)
 
     theta_star = ThetaStar()
-    optimal_path = theta_star.plan((state_world[1], state_world[0]), 
-                              (goal_pixel[1], goal_pixel[0]),
+    optimal_path = theta_star.plan((state_world[0], state_world[1]), 
+                              (goal_pixel[0], goal_pixel[1]),
                               grid_map, occupation_map, penalty_map)
     # print(optimal_path)
 
@@ -132,7 +141,7 @@ def compute_deviation_from_path(current_pos, optimal_path):
         distances = np.linalg.norm(path_points - np.array(current_pos), axis=1)
         min_distance = np.min(distances)
         return min_distance
-    return np.inf()
+    return np.inf
 
 def generate_potential_field(grid_map, goal, path_points, k_att=10.0, k_rep=30.0, d0=5.0, scale = 0.07):
     """
@@ -250,6 +259,7 @@ class TurtleBotEnv(Node, gym.Env):
         self.occupation_map = np.zeros_like(self.grid_map, dtype=np.float32)
         self.penalty_map = np.zeros_like(self.grid_map, dtype=np.float32)
         self.max_steps = 5000
+
         qos_profile = QoSProfile(
             depth=5,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
@@ -316,7 +326,7 @@ class TurtleBotEnv(Node, gym.Env):
             self.visualize_path(robot, path_)
 
     def get_path(self, opt_path):
-        path = [grid_to_world(i[1], i[0]) for i in opt_path]
+        path = [grid_to_world(i[0], i[1]) for i in opt_path]
         return path
 
     def update_dynamic_maps(self):
@@ -328,8 +338,8 @@ class TurtleBotEnv(Node, gym.Env):
                 map_offset=(0, 0),
                 map_shape=self.grid_map.shape
             )
-            self.occupation_map[y][x] += 0.1
-            self.penalty_map[y][x] = self.calculate_dynamic_penalty(x, y)
+            self.occupation_map[x][y] += 0.1
+            self.penalty_map[x][y] = self.calculate_dynamic_penalty(x, y)
 
     def get_observations(self):
         observations = []
@@ -342,8 +352,8 @@ class TurtleBotEnv(Node, gym.Env):
                 map_shape=self.grid_map.shape
             )
             
-            dynamic_cost = self.occupation_map[y][x]
-            penalty = self.penalty_map[y][x]
+            dynamic_cost = self.occupation_map[x][y]
+            penalty = self.penalty_map[x][y]
             
             obs = np.concatenate([
                 robot.state,
@@ -632,7 +642,7 @@ class TurtleBotEnv(Node, gym.Env):
             distances = np.linalg.norm(path_points - np.array(current_pos), axis=1)
             min_distance = np.min(distances)
             return min_distance
-        return np.inf()
+        return np.inf
 
 
 
@@ -722,6 +732,8 @@ class TurtleBotEnv(Node, gym.Env):
             if min_obstacle_dist < 0.4:
                 robot.reward -= 20 * (0.5 - min_obstacle_dist)
 
+            if abs(robot.current_x - robot.prev_x) < 0.15 and distance > 0.35:
+                robot.reward -= 100
             # Достигли цели
             if distance < 0.3:
                 robot.reward += 200
@@ -737,13 +749,14 @@ class TurtleBotEnv(Node, gym.Env):
             
             # Условие завершения при столкновении
             if collision_penalty < -10:
-                dones = [True, True]
-            
+                for robot in self.robots:
+                    robot.done==True 
+                        
 
             rewards.append(robot.reward)
             dones = [robot.done for robot in self.robots]
 
-        return self.get_observations(), rewards, all(dones), {}
+        return self.get_observations(), rewards, any(dones), {}
 
     def reset_state(self, robot, cur_pos):
         cur_x, cur_y = cur_pos
@@ -784,8 +797,8 @@ class TurtleBotEnv(Node, gym.Env):
                 map_shape=self.grid_map.shape
             )
                 
-            dynamic_cost = self.occupation_map[y][x]
-            penalty = self.penalty_map[y][x]
+            dynamic_cost = self.occupation_map[x][y]
+            penalty = self.penalty_map[x][y]
                 
             robot.state = np.concatenate([
                 robot.state,
@@ -804,8 +817,14 @@ class TurtleBotEnv(Node, gym.Env):
         path_marker.action = Marker.ADD
         path_marker.scale.x = 0.05 
         path_marker.color.a = 1.0
-        path_marker.color.g = 1.0  
-        path_marker.color.r = 0.0
+        if robot.namespace == 'tb0':
+            path_marker.color.g = 1.0
+        else:
+            path_marker.color.g = 0.0
+        if robot.namespace == 'tb0':
+            path_marker.color.r = 0.0
+        else:
+            path_marker.color.r = 1.0
         path_marker.color.b = 0.0
         for (x, y) in path:
             p = Point()
