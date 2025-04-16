@@ -100,7 +100,7 @@ class PPOAgent:
 
             
 
-        self.critics = [
+        self.critic = [
             ImprovedCritic(state_dim, env.grid_map, env.robots[i].optimal_path)
             for i, state_dim in enumerate(self.state_dims)
         ]
@@ -293,9 +293,6 @@ class PPOAgent:
         for episode in range(max_episodes):
             print('----------------------------------------------------------------------------')
             print("Episode: ",episode)
-            logger.info('\n----------------------------------------------------------------------------')
-            logger.info(f'Episode {episode}')
-
             states = self.env.reset()
             episode_rewards = [0] * num_robots
             done = False

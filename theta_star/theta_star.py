@@ -1,7 +1,7 @@
 from queue import PriorityQueue
 import numpy as np
 
-class node:
+class Node:
     def __init__(self, parent=None, position=None):
         self.parent = parent
         self.position = position
@@ -19,9 +19,9 @@ class ThetaStar:
     def heuristic(self, a, b):
         return np.linalg.norm(np.array(a) - np.array(b))
 
-    def theta_star(self, start, end, grid, occupations, penalties):
-        start_node = node(None, start)
-        end_node = node(None, end)
+    def plan(self, start, end, grid, occupations, penalties):
+        start_node = Node(None, start)
+        end_node = Node(None, end)
 
         open_list = PriorityQueue()
         closed_list = dict()  
@@ -56,15 +56,18 @@ class ThetaStar:
                     continue
                 if current_node.parent and self.line_of_sight(current_node.parent.position, node_position, grid):
                     new_g = current_node.parent.g + self.heuristic(current_node.parent.position, node_position)
-                    tentative_node = node(current_node.parent, node_position)
+                    tentative_node = Node(current_node.parent, node_position)
                 else:
                     new_g = current_node.g + self.heuristic(current_node.position, node_position)
-                    tentative_node = node(current_node, node_position)
+                    tentative_node = Node(current_node, node_position)
 
                 base_cost = 1.0
                 dynamic_cost = occupations[node_position[0]][node_position[1]]
                 penalty = penalties[node_position[0]][node_position[1]]
-                new_g += base_cost + 2* dynamic_cost * penalty
+                new_g += base_cost + 2 * dynamic_cost * penalty
+                # if dynamic_cost > 0:
+                #     print("new_g += base_cost + 2 * dynamic_cost * penalty")
+                #     print(f"{new_g} += {base_cost} + 2* {dynamic_cost} * {penalty}")
 
                 if node_position in closed_list:
                     existing_node = closed_list[node_position]

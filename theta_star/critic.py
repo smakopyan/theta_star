@@ -4,14 +4,24 @@ from keras import layers
 import numpy as np
 import matplotlib.pyplot as plt
 
-def world_to_grid(self, x_world, y_world):
-    x_grid = int((x_world - self.map_origin[0]) / self.map_resolution)
-    y_grid = int((y_world - self.map_origin[1])/ self.map_resolution)
+def world_to_map(world_coords, resolution, origin, map_offset, map_shape):
+    x_world, y_world = world_coords
 
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # width и height хз правильно или нет, проверь!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
-    x_map = np.clip(x_grid, 0, self.width[1] - 1)
-    y_map = np.clip(y_grid, 0, self.height[0] - 1)
+    # Для одиночных значений (не массивов)
+    if not isinstance(x_world, np.ndarray):
+        x_map = int((x_world - origin[0]) / resolution) + map_offset[0]
+        y_map = int((y_world - origin[1]) / resolution) + map_offset[1]
+    else:
+        # Для массивов
+        x_map = ((x_world - origin[0]) / resolution).astype(int) + map_offset[0]
+        y_map = ((y_world - origin[1]) / resolution).astype(int) + map_offset[1]
+
+    # Переворот координаты Y
+    y_map = map_shape[0] - y_map - 1
+
+    # Ограничение диапазона
+    x_map = np.clip(x_map, 0, map_shape[1]-1) if isinstance(x_map, np.ndarray) else max(0, min(x_map, map_shape[1]-1))
+    y_map = np.clip(y_map, 0, map_shape[0]-1) if isinstance(y_map, np.ndarray) else max(0, min(y_map, map_shape[0]-1))
 
     return x_map, y_map
 
@@ -176,7 +186,8 @@ class StaticCritic:
         if state.ndim == 2 and state.shape[0] == 1:
             state = state[0] 
         x, y = state[:2]  # Берём координаты состояния
-        x_map, y_map = world_to_grid(x, y)
+        x_map, y_map = world_to_map((x, y), resolution=0.05, origin=(-7.76, -7.15),
+                                    map_offset=(0, 0), map_shape=self.grid_map.shape)
         return self.value_map[y_map, x_map]  # Достаём значение из таблицы
     
 

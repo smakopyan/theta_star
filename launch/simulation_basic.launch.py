@@ -28,13 +28,13 @@ def generate_launch_description():
     
     declare_world_name = DeclareLaunchArgument(
         'world',
-        default_value='test1.sdf',  
+        default_value='world3.sdf',  
         choices=['world1.sdf', 'world2.sdf', 'world3.sdf', 'world4.sdf', 'turtlebot3_world.world', 'test.sdf', 'test1.sdf']
     )
     
     declare_map_name = DeclareLaunchArgument(
         'map',
-        default_value='test1.yaml',
+        default_value='map3.yaml',
         choices=['map1.yaml', 'map2.yaml', 'map3.yaml', 'map4.yaml', 'turtlebot3_map.yaml', 'map_test.yaml', 'test.yaml', 'test1.yaml']
     )
         
@@ -107,7 +107,7 @@ def generate_launch_description():
 
 
 # test.yaml
-    spawn_points = [(-0.7, 0.05), (4.0, 0.05)]
+    spawn_points = [(-0.7, 0.05), (-2.5, 0.05)]
     last_action = None
     remappings = [("/tf", "tf"), ("/tf_static", "tf_static")]
 
