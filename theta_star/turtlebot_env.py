@@ -27,10 +27,27 @@ from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSHistoryPolicy, QoSReli
 logging.basicConfig(filename='training_logs.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def slam_to_grid_map(slam_map, threshold=128):
+def slam_to_grid_map(slam_map, threshold=200):
     
     grid_map = np.where(slam_map < threshold, 1, 0)  
     num_obstacles = np.count_nonzero(grid_map == 1)
+    # np.savetxt("map.txt", grid_map, fmt='%d', delimiter=' ')
+    # expansion_size = 4
+    # height = slam_map.shape[0]
+    # width = slam_map.shape[1]
+    # resolution = 0.05
+    # data = np.array(slam_map).reshape(height,width)
+    # wall = np.where(data < threshold, 1, 0)  
+    # for i in range(-expansion_size,expansion_size+1):
+    #     for j in range(-expansion_size,expansion_size+1):
+    #         if i  == 0 and j == 0:
+    #             continue
+    #         x = wall[0]+i
+    #         y = wall[1]+j
+    #         x = np.clip(x,0,height-1)
+    #         y = np.clip(y,0,width-1)
+    #         data[x,y] = 1
+    # grid_map = data*resolution
     return grid_map
     
 def grid_to_world(x_grid, y_grid, map_resolution = 0.05, map_origin = (-7.76,-7.15)):
@@ -64,14 +81,14 @@ def world_to_map(world_coords, resolution, origin, map_offset, map_shape):
         y_map = int((y_world - origin[1]) / resolution) + map_offset[1]
 
     # Переворачиваем Y, если SLAM-карта инвертирована
-    if isinstance(y_map, np.ndarray):
-        y_map = map_shape[0] - y_map - 1
-        x_map = np.clip(x_map, 0, map_shape[1] - 1)
-        y_map = np.clip(y_map, 0, map_shape[0] - 1)
-    else:
-        y_map = map_shape[0] - y_map - 1
-        x_map = max(0, min(x_map, map_shape[1] - 1))
-        y_map = max(0, min(y_map, map_shape[0] - 1))
+    # if isinstance(y_map, np.ndarray):
+    #     y_map = map_shape[0] - y_map - 1
+    #     x_map = np.clip(x_map, 0, map_shape[1] - 1)
+    #     y_map = np.clip(y_map, 0, map_shape[0] - 1)
+    # else:
+    #     y_map = map_shape[0] - y_map - 1
+    #     x_map = max(0, min(x_map, map_shape[1] - 1))
+    #     y_map = max(0, min(y_map, map_shape[0] - 1))
 
     return x_map, y_map
 
@@ -93,8 +110,8 @@ def path(robot, grid_map, occupation_map, penalty_map,  map_resolution = 0.05, m
     # print(goal_pixel)
 
     theta_star = ThetaStar()
-    optimal_path = theta_star.plan((state_world[0], state_world[1]), 
-                              (goal_pixel[0], goal_pixel[1]),
+    optimal_path = theta_star.plan((state_world[1], state_world[0]), 
+                              (goal_pixel[1], goal_pixel[0]),
                               grid_map, occupation_map, penalty_map)
     # print(optimal_path)
 
@@ -138,7 +155,7 @@ def path(robot, grid_map, occupation_map, penalty_map,  map_resolution = 0.05, m
 def compute_deviation_from_path(current_pos, optimal_path):
     if optimal_path:
         path_points = np.array(optimal_path)
-        distances = np.linalg.norm(path_points - np.array(current_pos), axis=1)
+        distances = np.linalg.norm(path_points - np.array(current_pos)[::-1], axis=1)
         min_distance = np.min(distances)
         return min_distance
     return np.inf
@@ -246,7 +263,7 @@ class TurtleBotEnv(Node, gym.Env):
         self.num_robots = 2
         spawn_points = [[-0.7, 0.05], [-2.5, 0.05]]
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        goals = [[-2.5, 0.05],[-0.7, 0.05] ]
+        goals = [[0.483287, -2.73528],[0.583933, -3.66662] ]
         self.robots = [Robot(f"tb{i}", spawn_points[i], goals[i]) for i in range(self.num_robots)]
         print(self.robots)
         slam_map = cv2.imread(os.path.join(get_package_share_directory('theta_star'),
@@ -326,7 +343,7 @@ class TurtleBotEnv(Node, gym.Env):
             self.visualize_path(robot, path_)
 
     def get_path(self, opt_path):
-        path = [grid_to_world(i[0], i[1]) for i in opt_path]
+        path = [grid_to_world(i[1], i[0]) for i in opt_path]
         return path
 
     def update_dynamic_maps(self):
@@ -338,8 +355,8 @@ class TurtleBotEnv(Node, gym.Env):
                 map_offset=(0, 0),
                 map_shape=self.grid_map.shape
             )
-            self.occupation_map[x][y] += 0.1
-            self.penalty_map[x][y] = self.calculate_dynamic_penalty(x, y)
+            self.occupation_map[y][x] += 0.1
+            self.penalty_map[y][x] = self.calculate_dynamic_penalty(x, y)
 
     def get_observations(self):
         observations = []
@@ -352,8 +369,8 @@ class TurtleBotEnv(Node, gym.Env):
                 map_shape=self.grid_map.shape
             )
             
-            dynamic_cost = self.occupation_map[x][y]
-            penalty = self.penalty_map[x][y]
+            dynamic_cost = self.occupation_map[y][x]
+            penalty = self.penalty_map[y][x]
             
             obs = np.concatenate([
                 robot.state,
@@ -550,14 +567,23 @@ class TurtleBotEnv(Node, gym.Env):
 
         next_angle = (next_angle + np.pi) % (2 * np.pi) - np.pi
         
+        next_x_map, next_y_map = world_to_map(
+            (current_x, current_y),
+            resolution=0.05,
+            origin=(-7.76, -7.15),
+            map_offset=(0, 0),
+            map_shape=self.grid_map.shape
+        )
+        dynamic_cost = self.occupation_map[next_y_map][next_x_map]
+        penalty = self.penalty_map[next_y_map][next_x_map]
         # Сохраняем остальные компоненты состояния без изменений
         return np.array([
             next_x,
             next_y,
             angle_diff,  # Обновить при необходимости
             min_obstacle_dist,
-            state[4],    # dynamic_cost
-            state[5]     # penalty
+            dynamic_cost if dynamic_cost else 0.0,    # dynamic_cost
+            penalty if penalty else 0.0# penalty
         ], dtype=np.float32)
     def compute_potential_reward(self, intermediate_points, obstacle_detected, robot, k_att=10.0, k_rep=30.0, d0=5.0, lam=0.5):
         current_x = robot.state[0]
@@ -639,7 +665,7 @@ class TurtleBotEnv(Node, gym.Env):
         """
         if robot.optimal_path:
             path_points = np.array(robot.optimal_path)
-            distances = np.linalg.norm(path_points - np.array(current_pos), axis=1)
+            distances = np.linalg.norm(path_points - np.array(current_pos)[::-1], axis=1)
             min_distance = np.min(distances)
             return min_distance
         return np.inf
@@ -664,6 +690,7 @@ class TurtleBotEnv(Node, gym.Env):
         # Можно сделать штраф линейным или экспоненциальным в зависимости от задачи
         penalty = -min(max_penalty, deviation*1.5)  # Чем дальше от пути, тем больше штраф
         return penalty
+    
     def compute_collision_penalty(self, robot1, robot2):
         distance = np.sqrt((robot1.current_x - robot2.current_x)**2 + 
                         (robot1.current_y - robot2.current_y)**2)
@@ -797,8 +824,8 @@ class TurtleBotEnv(Node, gym.Env):
                 map_shape=self.grid_map.shape
             )
                 
-            dynamic_cost = self.occupation_map[x][y]
-            penalty = self.penalty_map[x][y]
+            dynamic_cost = self.occupation_map[y][x]
+            penalty = self.penalty_map[y][x]
                 
             robot.state = np.concatenate([
                 robot.state,
@@ -854,8 +881,9 @@ class TurtleBotEnv(Node, gym.Env):
         )        
         for i in range(0,self.grid_map.shape[0]):
             for j in range(0,self.grid_map.shape[1]):
-                msg.data.append(int(self.grid_map[i][j] * 50))
-        
+                msg.data.append(int(self.grid_map[i][j] * 100))
+        # msg.data = [int(val) for val in self.grid_map.flatten()]
+
         self.gridmap_pub.publish(msg)
 
     def publish_occupation_map(self):
