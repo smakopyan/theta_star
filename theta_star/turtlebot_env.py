@@ -50,7 +50,8 @@ def slam_to_grid_map(slam_map, threshold=200):
     # grid_map = data*resolution
     return grid_map
     
-def grid_to_world(x_grid, y_grid, map_resolution = 0.05, map_origin = (-7.76,-7.15)):
+def grid_to_world(x_grid, y_grid, map_shape, map_resolution = 0.05, map_origin = (-7.76,-7.15)):
+    
     x_world = x_grid * map_resolution + map_origin[0]
     y_world = y_grid * map_resolution + map_origin[1]
     return (x_world, y_world)
@@ -74,21 +75,21 @@ def world_to_map(world_coords, resolution, origin, map_offset, map_shape):
 
     # Обработка массивов и одиночных значений
     if isinstance(x_world, np.ndarray):
-        x_map = ((x_world - origin[0]) / resolution).astype(int) + map_offset[0]
-        y_map = ((y_world - origin[1]) / resolution).astype(int) + map_offset[1]
+        x_map = ((x_world - origin[0]) / resolution).astype(int) 
+        y_map = ((y_world - origin[1]) / resolution).astype(int) 
     else:
-        x_map = int((x_world - origin[0]) / resolution) + map_offset[0]
-        y_map = int((y_world - origin[1]) / resolution) + map_offset[1]
+        x_map = int((x_world - origin[0]) / resolution) 
+        y_map = int((y_world - origin[1]) / resolution) 
 
     # Переворачиваем Y, если SLAM-карта инвертирована
-    # if isinstance(y_map, np.ndarray):
-    #     y_map = map_shape[0] - y_map - 1
-    #     x_map = np.clip(x_map, 0, map_shape[1] - 1)
-    #     y_map = np.clip(y_map, 0, map_shape[0] - 1)
-    # else:
-    #     y_map = map_shape[0] - y_map - 1
-    #     x_map = max(0, min(x_map, map_shape[1] - 1))
-    #     y_map = max(0, min(y_map, map_shape[0] - 1))
+    if isinstance(y_map, np.ndarray):
+        y_map = map_shape[0] - y_map - 1
+        x_map = np.clip(x_map, 0, map_shape[1] - 1)
+        y_map = np.clip(y_map, 0, map_shape[0] - 1)
+    else:
+        y_map = map_shape[0] - y_map - 1
+        x_map = max(0, min(x_map, map_shape[1] - 1))
+        y_map = max(0, min(y_map, map_shape[0] - 1))
 
     return x_map, y_map
 
@@ -155,7 +156,7 @@ def path(robot, grid_map, occupation_map, penalty_map,  map_resolution = 0.05, m
 def compute_deviation_from_path(current_pos, optimal_path):
     if optimal_path:
         path_points = np.array(optimal_path)
-        distances = np.linalg.norm(path_points - np.array(current_pos)[::-1], axis=1)
+        distances = np.linalg.norm(path_points - np.array(current_pos), axis=1)
         min_distance = np.min(distances)
         return min_distance
     return np.inf
@@ -263,7 +264,9 @@ class TurtleBotEnv(Node, gym.Env):
         self.num_robots = 2
         spawn_points = [[-0.7, 0.05], [-2.5, 0.05]]
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        goals = [[0.483287, -2.73528],[0.583933, -3.66662] ]
+        # goals = [[0.483287, -2.73528],[0.583933, -3.66662] ]
+        goals = spawn_points[::-1]
+
         self.robots = [Robot(f"tb{i}", spawn_points[i], goals[i]) for i in range(self.num_robots)]
         print(self.robots)
         slam_map = cv2.imread(os.path.join(get_package_share_directory('theta_star'),
@@ -343,7 +346,7 @@ class TurtleBotEnv(Node, gym.Env):
             self.visualize_path(robot, path_)
 
     def get_path(self, opt_path):
-        path = [grid_to_world(i[1], i[0]) for i in opt_path]
+        path = [grid_to_world(i[1], i[0], map_shape = self.grid_map.shape) for i in opt_path]
         return path
 
     def update_dynamic_maps(self):
@@ -599,8 +602,12 @@ class TurtleBotEnv(Node, gym.Env):
             map_shape=self.grid_map.shape
         )
 
-        goal_x, goal_y = world_to_map(robot.goal, 0.05, (-4.86, -7.36), (45, 15), self.grid_map.shape)
-
+        goal_x, goal_y = world_to_map(robot.goal,
+            resolution=0.05,
+            origin=(-7.76, -7.15),
+            map_offset=(0, 0),
+            map_shape=self.grid_map.shape
+        )
         potential_value = robot.potential_field[current_y, current_x] 
         delta_potential = robot.prev_potential - potential_value
         R_potential = np.clip(-delta_potential, -1.0, 1.0)
@@ -665,7 +672,7 @@ class TurtleBotEnv(Node, gym.Env):
         """
         if robot.optimal_path:
             path_points = np.array(robot.optimal_path)
-            distances = np.linalg.norm(path_points - np.array(current_pos)[::-1], axis=1)
+            distances = np.linalg.norm(path_points - np.array(current_pos), axis=1)
             min_distance = np.min(distances)
             return min_distance
         return np.inf
@@ -855,8 +862,8 @@ class TurtleBotEnv(Node, gym.Env):
         path_marker.color.b = 0.0
         for (x, y) in path:
             p = Point()
-            p.x = x
-            p.y = y
+            p.x = float(x)
+            p.y = float(y)
             p.z = 0.0
             path_marker.points.append(p)
         robot.path_marker_pub.publish(path_marker)
