@@ -12,14 +12,26 @@ import logging
 import signal
 import sys
 import traceback
+from ament_index_python.packages import get_package_share_directory
+import os
 
 
+training_logger = logging.getLogger('training')
+training_logger.setLevel(logging.INFO)
+training_handler = logging.FileHandler('training_logs.txt')
+training_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+training_handler.setFormatter(training_formatter)
+training_logger.addHandler(training_handler)
 
-logging.basicConfig(filename='training_logs.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+reward_logger = logging.getLogger('reward')
+reward_logger.setLevel(logging.INFO)
+reward_handler = logging.FileHandler('reward_logs.txt')
+reward_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+reward_handler.setFormatter(reward_formatter)
+reward_logger.addHandler(reward_handler)
 
-logging.basicConfig(filename='reward_logs.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger2 = logging.getLogger(__name__)
+training_logger.info("Сообщение о процессе обучения")
+reward_logger.info("Сообщение о наградах")
 
 def precompute_value_map(grid_map, optimal_path, goal, path_weight = 5.0, obstacle_weight=10.0, goal_weight = 4.0):
         """ Заполняем таблицу значений критика для всех точек grid_map """
@@ -150,7 +162,7 @@ class PPOAgent:
             robot = self.env.robots[i]
             state_tensor = tf.convert_to_tensor([state], dtype=tf.float32)
 
-            logger.info(f'State in get_action: {state}') 
+            training_logger.info(f'State in get_action: {state}') 
             prob = self.actors[i](state_tensor).numpy().squeeze()
             prob = np.nan_to_num(prob, nan=1.0/self.action_dims[i])
             prob /= np.sum(prob)
@@ -175,14 +187,14 @@ class PPOAgent:
 
                 # Усреднение текущей и будущей оценки
                 action_values[action] = 0.3 * value_current + 0.7 * value_next
-                logger.info(f'Action values in get_action before normalization: {action_values}') 
+                training_logger.info(f'Action values in get_action before normalization: {action_values}') 
 
             # Нормализация оценок критика
             action_values = (action_values - np.min(action_values)) / (np.max(action_values) - np.min(action_values) + 1e-10)
-            logger.info(f'Action values in get_action after normalization: {action_values}')  
+            training_logger.info(f'Action values in get_action after normalization: {action_values}')  
 
             combined_scores = alpha * prob + (1 - alpha) * action_values
-            logger.info(f'Combined scores in get_action: {combined_scores}') 
+            training_logger.info(f'Combined scores in get_action: {combined_scores}') 
 
                 # Эпсилон-жадный выбор действия
             # if np.random.rand() < self.epsilon:
@@ -231,9 +243,9 @@ class PPOAgent:
             # print ('Returns:', returns)
             advantages.append(robot_advantages)
             returns.append(robot_returns)
-            logger.info(f'Returns:  {returns}' )
-            logger.info(f'Advanteges:  {advantages}' )
-            logger.info(f'Values_learned: {values}')
+            training_logger.info(f'Returns:  {returns}' )
+            training_logger.info(f'Advanteges:  {advantages}' )
+            training_logger.info(f'Values_learned: {values}')
 
         return advantages, returns 
     
@@ -256,9 +268,9 @@ class PPOAgent:
                 clipped_prob_ratio = tf.clip_by_value(prob_ratio, 1.0 - self.epsilon, 1.0 + self.epsilon)
 
                 surrogate_loss = tf.minimum(prob_ratio * advantages, clipped_prob_ratio * advantages)
-                logger.info(f'Surrogate loss: {surrogate_loss}')
+                training_logger.info(f'Surrogate loss: {surrogate_loss}')
                 actor_loss = -tf.reduce_mean(surrogate_loss)
-                logger.info(f'Acotor loss: {actor_loss}')
+                training_logger.info(f'Acotor loss: {actor_loss}')
                 
             actor_grads = tape.gradient(actor_loss, self.actors[i].trainable_variables)
             self.actor_optimizers[i].apply_gradients(zip(actor_grads, self.actors[i].trainable_variables))
@@ -286,6 +298,7 @@ class PPOAgent:
             self.actors[i].save(f'ppo_actor_robot_{i}.keras')
             self.critics[i].save(f'ppo_critic_robot_{i}.keras')
         print("\nModels saved successfully!")
+
     def train(self, max_episodes=500, batch_size=32, num_robots=2):
         all_rewards = []
         alpha = 0
@@ -295,9 +308,10 @@ class PPOAgent:
         for episode in range(max_episodes):
             print('----------------------------------------------------------------------------')
             print("Episode: ",episode)
-            logger.info('\n----------------------------------------------------------------------------')
-            logger.info(f'Episode {episode}')
-            logger2.info(f'Episode {episode}')
+            training_logger.info('\n----------------------------------------------------------------------------')
+            reward_logger.info('\n----------------------------------------------------------------------------')
+            training_logger.info(f'Episode {episode}')
+            reward_logger.info(f'Episode {episode}')
 
             states = self.env.reset()
             episode_rewards = [0] * num_robots
@@ -341,7 +355,7 @@ class PPOAgent:
                     batch_data[i]['probs'].append(probs[i])
 
                     episode_rewards[i] += rewards[i]
-                    logger.info(f'Episode reward  {episode_rewards[i]}')
+                    training_logger.info(f'Episode reward  {episode_rewards[i]}')
                 states = next_states
                 step += 1
 
@@ -373,11 +387,11 @@ class PPOAgent:
             print(f"  Robot 1 Reward: {episode_rewards[0]:.2f}")
             print(f"  Robot 2 Reward: {episode_rewards[1]:.2f}")
             print(f"  Average Reward: {avg_reward:.2f}")
-            logger2.info(f"Episode {episode+1}/{max_episodes}")
-            logger2.info(f"  Robot 1 Reward: {episode_rewards[0]:.2f}")
-            logger2.info(f"  Robot 2 Reward: {episode_rewards[1]:.2f}")
-            logger2.info(f"  Average Reward: {avg_reward:.2f}")
-            logger2.info("="*50)
+            reward_logger.info(f"Episode {episode+1}/{max_episodes}")
+            reward_logger.info(f"  Robot 1 Reward: {episode_rewards[0]:.2f}")
+            reward_logger.info(f"  Robot 2 Reward: {episode_rewards[1]:.2f}")
+            reward_logger.info(f"  Average Reward: {avg_reward:.2f}")
+            reward_logger.info("="*50)
 
         for i in range(self.num_robots):
             self.actors[i].save(f'ppo_actor_robot_{i}.keras')
