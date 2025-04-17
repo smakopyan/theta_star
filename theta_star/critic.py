@@ -16,12 +16,12 @@ def world_to_map(world_coords, resolution, origin, map_offset, map_shape):
         x_map = ((x_world - origin[0]) / resolution).astype(int) + map_offset[0]
         y_map = ((y_world - origin[1]) / resolution).astype(int) + map_offset[1]
 
-    # # Переворот координаты Y
-    # y_map = map_shape[0] - y_map - 1
+    # Переворот координаты Y
+    y_map = map_shape[0] - y_map - 1
 
-    # # Ограничение диапазона
-    # x_map = np.clip(x_map, 0, map_shape[1]-1) if isinstance(x_map, np.ndarray) else max(0, min(x_map, map_shape[1]-1))
-    # y_map = np.clip(y_map, 0, map_shape[0]-1) if isinstance(y_map, np.ndarray) else max(0, min(y_map, map_shape[0]-1))
+    # Ограничение диапазона
+    x_map = np.clip(x_map, 0, map_shape[1]-1) if isinstance(x_map, np.ndarray) else max(0, min(x_map, map_shape[1]-1))
+    y_map = np.clip(y_map, 0, map_shape[0]-1) if isinstance(y_map, np.ndarray) else max(0, min(y_map, map_shape[0]-1))
 
     return x_map, y_map
 
