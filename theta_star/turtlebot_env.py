@@ -237,7 +237,7 @@ class Robot():
         self.obstacles = []
         self.prev_distance = None
         self.past_distance = 0
-        self.max_steps = 5000
+        self.max_steps = 750
         self.steps = 0 
         self.recent_obstacles = []
         self.state = np.array([])
@@ -717,6 +717,7 @@ class TurtleBotEnv(Node, gym.Env):
                 cmd_msg.linear.x = 0.2
             elif action == 2:
                 cmd_msg.angular.z = -0.5
+            print(robot.namespace)
             robot.cmd_vel_pub.publish(cmd_msg)
         
             rclpy.spin_once(self, timeout_sec=0.1) 
@@ -772,7 +773,10 @@ class TurtleBotEnv(Node, gym.Env):
             if distance < 0.3:
                 robot.reward += 200
                 robot.done = True
-
+            
+            if distance > 10:
+                robot.reward -= 200
+                robot.done = True 
             # Превышен лимит шагов
             if robot.steps >= robot.max_steps:
                 robot.reward -= 100

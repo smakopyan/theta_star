@@ -160,8 +160,9 @@ class PPOAgent:
         for i in range(self.num_robots):
             state = states[i]
             robot = self.env.robots[i]
-            state_tensor = tf.convert_to_tensor([state], dtype=tf.float32)
-
+            # state_tensor = tf.convert_to_tensor([state], dtype=tf.float32)
+            state_tensor = np.reshape(state, [1,self.state_dims[i]])
+            print(state_tensor)
             training_logger.info(f'State in get_action: {state}') 
             prob = self.actors[i](state_tensor).numpy().squeeze()
             prob = np.nan_to_num(prob, nan=1.0/self.action_dims[i])
@@ -296,7 +297,6 @@ class PPOAgent:
     def save_models(self):
         for i in range(self.num_robots):
             self.actors[i].save(f'ppo_actor_robot_{i}.keras')
-            self.critics[i].save(f'ppo_critic_robot_{i}.keras')
         print("\nModels saved successfully!")
 
     def train(self, max_episodes=500, batch_size=32, num_robots=2):
@@ -395,7 +395,6 @@ class PPOAgent:
 
         for i in range(self.num_robots):
             self.actors[i].save(f'ppo_actor_robot_{i}.keras')
-            self.critics[i].save(f'ppo_critic_robot_{i}.keras')
 
         return all_rewards
 
