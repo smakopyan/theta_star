@@ -265,7 +265,7 @@ class TurtleBotEnv(Node, gym.Env):
         spawn_points = [[-0.7, 0.05], [-2.5, 0.05]]
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # goals = [[0.483287, -2.73528],[0.583933, -3.66662] ]
-        goals = spawn_points[::-1]
+        goals = [[-4.0, 0.05], [1.0, 0.05]]
 
         self.robots = [Robot(f"tb{i}", spawn_points[i], goals[i]) for i in range(self.num_robots)]
         print(self.robots)
@@ -319,8 +319,9 @@ class TurtleBotEnv(Node, gym.Env):
                 self.create_camera_callback(robot),
                 10
             )
-            robot.optimal_path = path(robot, self.grid_map, self.occupation_map, self.penalty_map)
-
+            robot.optimal_path_ = path(robot, self.grid_map, self.occupation_map, self.penalty_map)
+            
+            robot.optimal_path = [[i[1], i[0]] for i in robot.optimal_path_]
             robot.potential_field = generate_potential_field(self.grid_map, world_to_map(robot.goal, 0.05, (-4.86, -7.36), (45, 15), self.grid_map.shape), robot.optimal_path)
             self.show_potential_field(robot) 
                     
@@ -340,10 +341,11 @@ class TurtleBotEnv(Node, gym.Env):
 
 
     def _timer_callback(self):
-        for robot in self.robots:
-            robot.optimal_path = path(robot, self.grid_map, self.occupation_map, self.penalty_map)
-            path_= self.get_path(robot.optimal_path)
-            self.visualize_path(robot, path_)
+        pass
+        # for robot in self.robots:
+        #     robot.optimal_path = path(robot, self.grid_map, self.occupation_map, self.penalty_map)
+        #     path_= self.get_path(robot.optimal_path)
+        #     self.visualize_path(robot, path_)
 
     def get_path(self, opt_path):
         path = [grid_to_world(i[1], i[0], map_shape = self.grid_map.shape) for i in opt_path]
@@ -358,7 +360,7 @@ class TurtleBotEnv(Node, gym.Env):
                 map_offset=(0, 0),
                 map_shape=self.grid_map.shape
             )
-            self.occupation_map[y][x] += 0.1
+            self.occupation_map[y][x] += 0.3
             self.penalty_map[y][x] = self.calculate_dynamic_penalty(x, y)
 
     def get_observations(self):
@@ -588,6 +590,7 @@ class TurtleBotEnv(Node, gym.Env):
             dynamic_cost if dynamic_cost else 0.0,    # dynamic_cost
             penalty if penalty else 0.0# penalty
         ], dtype=np.float32)
+    
     def compute_potential_reward(self, intermediate_points, obstacle_detected, robot, k_att=10.0, k_rep=30.0, d0=5.0, lam=0.5):
         current_x = robot.state[0]
         current_y = robot.state[1]
@@ -707,6 +710,8 @@ class TurtleBotEnv(Node, gym.Env):
     
     def step(self, actions):
         states, rewards, dones = [], [], []
+        self.occupation_map = np.zeros_like(self.grid_map, dtype=np.float32)
+        self.penalty_map = np.zeros_like(self.grid_map, dtype=np.float32)
         self.update_dynamic_maps()
 
         for robot, action in zip(self.robots, actions):
@@ -717,7 +722,7 @@ class TurtleBotEnv(Node, gym.Env):
                 cmd_msg.linear.x = 0.2
             elif action == 2:
                 cmd_msg.angular.z = -0.5
-            print(robot.namespace)
+
             robot.cmd_vel_pub.publish(cmd_msg)
         
             rclpy.spin_once(self, timeout_sec=0.1) 
@@ -743,7 +748,6 @@ class TurtleBotEnv(Node, gym.Env):
 
             # distance_rate = (self.past_distance - distance)
             # print(min_obstacle_dist)
-            robot.optimal_path = path(robot, self.grid_map, self.occupation_map, self.penalty_map)
 
             reward_potent_val = self.compute_potential_reward(robot.optimal_path, obstacle_detected, robot)
             reward_optimal_path = self.get_deviation_penalty(robot.state[:2], robot)
@@ -758,9 +762,11 @@ class TurtleBotEnv(Node, gym.Env):
             if obstacle_detected:
                 robot.obstacle_count += 1
                 robot.reward -= 50  # менее агрессивно
-                if robot.obstacle_count >= 1000:
+                if robot.obstacle_count >= 100:
                     robot.done = True
-                    robot.obstacle_count = 0
+                    for robot in self.robots:
+                        robot.obstacle_count = 0
+
                     print("Episode terminated due to repeated obstacle detection")
 
             # Очень близко к препятствию
@@ -770,8 +776,11 @@ class TurtleBotEnv(Node, gym.Env):
             if abs(robot.current_x - robot.prev_x) < 0.15 and distance > 0.35:
                 robot.reward -= 100
             # Достигли цели
+            other = self.robots[1] if robot.namespace == 'tb0' else self.robots[0]
             if distance < 0.3:
-                robot.reward += 200
+                print('GOAL REACHED!!!!')
+                robot.reward += 300
+                other.reward += 300
                 robot.done = True
             
             if distance > 10:
@@ -787,6 +796,8 @@ class TurtleBotEnv(Node, gym.Env):
             
             # Условие завершения при столкновении
             if collision_penalty < -10:
+                robot.reward -= 100
+                other.reward -= 100
                 for robot in self.robots:
                     robot.done==True 
                         
@@ -873,7 +884,8 @@ class TurtleBotEnv(Node, gym.Env):
         robot.path_marker_pub.publish(path_marker)
 
     def publish_costmaps(self):
-        self.publish_grid_map()
+        pass
+        # self.publish_grid_map()
         # self.publish_occupation_map()
         # self.publish_penalty_map()
 

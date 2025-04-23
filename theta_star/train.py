@@ -160,9 +160,8 @@ class PPOAgent:
         for i in range(self.num_robots):
             state = states[i]
             robot = self.env.robots[i]
-            # state_tensor = tf.convert_to_tensor([state], dtype=tf.float32)
             state_tensor = np.reshape(state, [1,self.state_dims[i]])
-            print(state_tensor)
+        
             training_logger.info(f'State in get_action: {state}') 
             prob = self.actors[i](state_tensor).numpy().squeeze()
             prob = np.nan_to_num(prob, nan=1.0/self.action_dims[i])
@@ -205,7 +204,7 @@ class PPOAgent:
             action = np.argmax(combined_scores)
             actions.append(action)
             probs.append(prob)
-
+            print(actions)
         return actions, probs
     
     # Вычисление преимущесвт и возврата
