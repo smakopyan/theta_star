@@ -171,7 +171,7 @@ class PPOAgent:
 
             for action in range(self.action_dims[i]):
                 next_state = self.env.get_next_state(
-                    state, action, self.env.robots[i].current_yaw
+                    state, action, self.env.robots[i].current_yaw, self.env.robots[i]
                 )
                 # Оценка текущего состояния
                 value_current_learned = self.critics[i].call(state)
@@ -204,7 +204,7 @@ class PPOAgent:
             action = np.argmax(combined_scores)
             actions.append(action)
             probs.append(prob)
-            print(actions)
+            # print(actions)
         return actions, probs
     
     # Вычисление преимущесвт и возврата
@@ -270,7 +270,7 @@ class PPOAgent:
                 surrogate_loss = tf.minimum(prob_ratio * advantages, clipped_prob_ratio * advantages)
                 training_logger.info(f'Surrogate loss: {surrogate_loss}')
                 actor_loss = -tf.reduce_mean(surrogate_loss)
-                training_logger.info(f'Acotor loss: {actor_loss}')
+                training_logger.info(f'Actor loss: {actor_loss}')
                 
             actor_grads = tape.gradient(actor_loss, self.actors[i].trainable_variables)
             self.actor_optimizers[i].apply_gradients(zip(actor_grads, self.actors[i].trainable_variables))
@@ -305,6 +305,8 @@ class PPOAgent:
         epsilon_decay = 0.99
         epsilon = 0.2
         for episode in range(max_episodes):
+            self.env.occupation_map = np.zeros_like(self.env.grid_map, dtype=np.float32)
+            self.env.penalty_map = np.ones_like(self.env.grid_map, dtype=np.float32)
             print('----------------------------------------------------------------------------')
             print("Episode: ",episode)
             training_logger.info('\n----------------------------------------------------------------------------')
@@ -334,6 +336,7 @@ class PPOAgent:
                 # logger.info(f'Action:  {action}')
                 # logger.info(f'Prob:  {prob}')
                 next_states, rewards, dones, _ = self.env.step(actions)
+                
                 if isinstance(dones, bool):
                     dones = [dones] * self.num_robots
                 if np.isnan(next_states).any():
@@ -376,6 +379,7 @@ class PPOAgent:
                         batch_data[i] = {k: [] for k in batch_data[i]}
 
                     if done:
+                        step = 0
                         break
 
             epsilon = max(epsilon_min, epsilon * epsilon_decay)
