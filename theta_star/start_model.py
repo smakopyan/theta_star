@@ -6,7 +6,7 @@ from actor import ImprovedActor
 
 actor = [
     keras.models.load_model(
-        'ppo_actor_robot_0.keras',
+        ('ppo_actor_robot_0.keras'),
         custom_objects={'ImprovedActor': ImprovedActor}
     ),
     keras.models.load_model(

@@ -1,27 +1,34 @@
 import tensorflow as tf
-# from tensorflow import kears
+from tensorflow import keras
 from keras import layers
 import numpy as np
 import matplotlib.pyplot as plt
 
 def world_to_map(world_coords, resolution, origin, map_offset, map_shape):
     x_world, y_world = world_coords
+    if isinstance(x_world, tf.Tensor):
+        x_world = x_world.numpy()
+    if isinstance(y_world, tf.Tensor):
+        y_world = y_world.numpy()
 
-    # Для одиночных значений (не массивов)
-    if not isinstance(x_world, np.ndarray):
-        x_map = int((x_world - origin[0]) / resolution) + map_offset[0]
-        y_map = int((y_world - origin[1]) / resolution) + map_offset[1]
-    else:
-        # Для массивов
-        x_map = ((x_world - origin[0]) / resolution).astype(int) + map_offset[0]
-        y_map = ((y_world - origin[1]) / resolution).astype(int) + map_offset[1]
+    # Проверка на NaN и Inf
+    if isinstance(x_world, np.ndarray):
+        mask = np.isfinite(x_world) & np.isfinite(y_world)
+        x_world, y_world = x_world[mask], y_world[mask]
 
-    # Переворот координаты Y
+    elif not np.isfinite(x_world) or not np.isfinite(y_world):
+        return None, None  # Вернем None, если координаты некорректны
+
+    # Преобразование
+    x_map = ((x_world - origin[0]) / resolution).astype(int) + map_offset[0]
+    y_map = ((y_world - origin[1]) / resolution).astype(int) + map_offset[1]
+
+    # Переворот Y
     y_map = map_shape[0] - y_map - 1
 
-    # Ограничение диапазона
-    x_map = np.clip(x_map, 0, map_shape[1]-1) if isinstance(x_map, np.ndarray) else max(0, min(x_map, map_shape[1]-1))
-    y_map = np.clip(y_map, 0, map_shape[0]-1) if isinstance(y_map, np.ndarray) else max(0, min(y_map, map_shape[0]-1))
+    # Ограничение координат
+    x_map = np.clip(x_map, 0, map_shape[1] - 1)
+    y_map = np.clip(y_map, 0, map_shape[0] - 1)
 
     return x_map, y_map
 
@@ -84,7 +91,7 @@ class ImprovedCritic(tf.keras.Model):
         self.dropout = layers.Dropout(rate=0.1)
         self.out = layers.Dense(1, activation=None, kernel_initializer='he_uniform')
 
-    def call(self, obs, training=True):
+    def call(self, obs, training=False):
         """
         :param obs: вектор состояния, например [x, y, ...]
         :param deviation_from_path: отклонение от оптимального пути (скаляр)
@@ -104,75 +111,17 @@ class ImprovedCritic(tf.keras.Model):
         #Если obs не батчевый (например, имеет форму (state_dim,)), добавляем размерность батча
         if len(obs.shape) == 1:
             obs = tf.expand_dims(obs, axis=0)
+        
+        x_norm = tf.identity(obs)
 
-        # Проход через резидуальные блоки
-        x0 = obs
+        x0 = x_norm
         x = self.rb1(x0, final_nl=True)
         x = self.rb2(tf.concat([x0, x], axis=-1), final_nl=True)
         x = self.dropout(x, training=training)
         output = self.out(x)
+   
         return output
     
-    # def eval_value(self, state, grid_map):
-    #     """
-    #     Оценивает значение состояния (работает с первым образцом, если state – батч)
-    #     :param state: вектор состояния или батч состояний
-    #     :return: оценка ценности
-    #     """
-        
-    #     # print(len(state))
-    #     # Если state является батчем, берём первый элемент
-    #     if state.ndim == 2 and state.shape[0] == 1:
-    #         state = state[0]
-
-        
-    #     state_sample = [state[0], state[1]]
-    #     st = [state[2], state[3]]
-    #     state_sample = world_to_map(state_sample, resolution = 0.05, origin = (-4.86, -7.36),  map_offset = (45, 15), map_shape = grid_map.shape)
-        
-    #     # Предполагаем, что первые два элемента вектора – координаты (x, y)
-    #     # Приводим их к числам для работы с numpy
-    #     current_pos = (float(state_sample[0].numpy()) if hasattr(state_sample[0], 'numpy') else float(state_sample[0]),
-    #                    float(state_sample[1].numpy()) if hasattr(state_sample[1], 'numpy') else float(state_sample[1]))
-    #     deviation = compute_deviation_from_path(current_pos, self.optimal_path)
-    #     self.deviation_list.append(deviation)
-    #     # Определяем штраф за столкновение
-    #     collision_penalty = 0
-    #     if self.is_near_obstacle(current_pos):
-    #         assert isinstance(collision_penalty, (int, float))
-    #         collision_penalty = 10 # Значительный штраф за приближение к препятствию
-    #     self.penality_list.append(collision_penalty)
-    #     state = tf.concat([
-    #     tf.convert_to_tensor(state_sample, dtype=tf.float32),  # Пиксельные координаты
-    #     tf.convert_to_tensor(st, dtype=tf.float32)             # Доп. параметры
-    #     ], axis=-1)
-
-    #     # print(state)
-    #     return self.call(state, deviation, collision_penalty)
-
-    
-    # def is_near_obstacle(self, point, safe_distance=2):
-    #     """
-    #     Проверяет, находится ли точка рядом с препятствием на карте.
-    #     :param point: координаты точки (x, y)
-    #     :param safe_distance: радиус проверки вокруг точки
-    #     :return: True, если в области обнаружено препятствие
-    #     """
-    #     x, y = int(round(point[0])), int(round(point[1]))
-    #     h, w = self.grid_map.shape
-
-    #     if x < 0 or y < 0 or x >= w or y >= h:
-    #         return True
-
-    #     # Определяем границы области проверки (учитываем, что срез в numpy не включает правую границу)
-    #     x_min = max(0, x - safe_distance)
-    #     x_max = min(w, x + safe_distance + 1)
-    #     y_min = max(0, y - safe_distance)
-    #     y_max = min(h, y + safe_distance + 1)
-
-    #     area = self.grid_map[y_min:y_max, x_min:x_max]
-    #     return np.any(area == 1)
-
 
 class StaticCritic:
     def __init__(self, value_map, grid_map):
@@ -186,8 +135,8 @@ class StaticCritic:
         if state.ndim == 2 and state.shape[0] == 1:
             state = state[0] 
         x, y = state[:2]  # Берём координаты состояния
-        x_map, y_map = world_to_map((x, y), resolution=0.05, origin=(-7.76, -7.15),
-                                    map_offset=(0, 0), map_shape=self.grid_map.shape)
+        x_map, y_map = world_to_map((x, y), resolution=0.05, origin=(-4.86, -7.36),
+                                    map_offset=(45, 15), map_shape=self.grid_map.shape)
         return self.value_map[y_map, x_map]  # Достаём значение из таблицы
     
 

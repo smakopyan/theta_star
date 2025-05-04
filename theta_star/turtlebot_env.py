@@ -23,6 +23,8 @@ from geometry_msgs.msg import Point, Pose
 from std_msgs.msg import ColorRGBA
 from std_msgs.msg import Header
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSHistoryPolicy, QoSReliabilityPolicy
+from tf2_ros import Buffer, TransformListener
+from rclpy.time import Time
 
 logging.basicConfig(filename='training_logs.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -168,7 +170,7 @@ class Robot():
         self.obstacles = []
         self.prev_distance = None
         self.past_distance = 0
-        self.max_steps = 150
+        self.max_steps = 100
         self.steps = 0 
         self.recent_obstacles = []
         self.state = np.array([])
@@ -177,6 +179,7 @@ class Robot():
         self.min_obstacle_dist = 0
         self.penalty = 0.0
         self.last_waypoint_idx = 0
+        self.beta_spin = 0.1
 
 class RunningStat(object):
     def __init__(self,shape):
@@ -261,7 +264,7 @@ class TurtleBotEnv(Node, gym.Env):
         self.map_initialized = False
         self.occupation_map = np.zeros_like(self.grid_map, dtype=np.float32)
         self.penalty_map = np.ones_like(self.grid_map, dtype=np.float32)
-        self.max_steps = 150
+        self.max_steps = 100
 
         qos_profile = QoSProfile(
             depth=5,
@@ -271,9 +274,7 @@ class TurtleBotEnv(Node, gym.Env):
         )
 
         self.gridmap_pub = self.create_publisher(OccupancyGrid, '/grid_costmap', qos_profile)
-        self.occupation_pub = self.create_publisher(OccupancyGrid, '/occupation_costmap', 10)
-        self.penalty_pub = self.create_publisher(OccupancyGrid, '/penalty_costmap', 10)
-        
+        # self.occupation_pub = self.create_publisher(OccupancyGrid, '/occupation_costmap', 10)
         for robot in self.robots:
             robot.cmd_vel_pub = self.create_publisher(Twist, f'/{robot.namespace}/cmd_vel', 10)
             
@@ -302,16 +303,16 @@ class TurtleBotEnv(Node, gym.Env):
                 self.create_camera_callback(robot),
                 10
             )
-            robot.optimal_path_ = self.path(robot, self.grid_map, self.occupation_map, self.penalty_map)
+            optimal_path_ = self.path(robot, self.grid_map, self.occupation_map, self.penalty_map)
             
-            robot.optimal_path = self.interpolate_path(robot.optimal_path_)
+            robot.optimal_path = self.interpolate_path(optimal_path_)
             # print(robot.optimal_path)
             robot.potential_field = generate_potential_field(self.grid_map, world_to_map(robot.goal, 0.05, (-7.76,-7.15), (45, 15), self.grid_map.shape), robot.optimal_path)
             self.show_potential_field(robot) 
                     
         self.x_range = [-10,10]
         self.y_range = [-10,10]
-        self.action_space = spaces.Discrete(3)  
+        self.action_space = spaces.Box(low=np.array([0.05, -1.82]), high=np.array([0.26, 1.82]), dtype=np.float32)
 
         self.observation_space = spaces.Box(
             low=np.array([-1.0, -1.0, -1.0, 0.0, 0.0, 0.0]),  
@@ -363,18 +364,6 @@ class TurtleBotEnv(Node, gym.Env):
         path = [grid_to_world(i[0], i[1], map_shape = self.grid_map.shape) for i in opt_path]
         return path
 
-    def update_dynamic_maps(self):
-        for robot in self.robots:
-            x, y = world_to_map(
-                (robot.current_x, robot.current_y),
-                resolution=0.05,
-                origin=(-7.76, -7.15),
-                map_offset=(0, 0),
-                map_shape=self.grid_map.shape
-            )
-            self.occupation_map[y][x] += 0.3
-            self.penalty_map[y][x] = self.calculate_dynamic_penalty(x, y)
-
     def get_observations(self):
         observations = []
         for robot in self.robots:
@@ -389,22 +378,18 @@ class TurtleBotEnv(Node, gym.Env):
             dynamic_cost = self.occupation_map[y][x]
             penalty = self.penalty_map[y][x]
             distance = math.sqrt((robot.target_x - robot.current_x) ** 2 + (robot.target_y - robot.current_y) ** 2)
-            
-            obs = np.concatenate([
-                robot.state,
-                [2*(dynamic_cost + penalty), distance],
-            ])
-            # print("obs before:", obs)
+            angle_to_goal = math.atan2(robot.target_y - robot.current_y, robot.target_x - robot.current_x)
+            angle_diff = (angle_to_goal - robot.current_yaw + np.pi) % (2 * np.pi) - np.pi
+            min_obstacle_dist = 3.5 if not robot.obstacles else min(robot.obstacles)
+
+            obs = np.array([robot.current_x, robot.current_y, angle_diff, min_obstacle_dist, 2*(dynamic_cost + penalty), distance])
             obs = self.state_filter(obs)
-            # print("obs after: ", obs)
             observations.append(obs)
-            # observations.append(self.normalize_state(obs))
-        return observations
+        return np.array(observations)
     
     def interpolate_path(self, raw_path, step=1):
         if not raw_path or len(raw_path) < 2:
             return []
-            
         interpolated = []
         for i in range(len(raw_path)-1):
             start = np.array(raw_path[i])
@@ -418,31 +403,22 @@ class TurtleBotEnv(Node, gym.Env):
         interpolated = [(int(round(x)), int(round(y))) for (x, y) in interpolated]
         return interpolated
 
-    def calculate_dynamic_penalty(self, x, y):
-        penalty = 0.0
-        for other in self.robots:
-            ox, oy = world_to_map(
-                (other.current_x, other.current_y),
-                resolution=0.05,
-                origin=(-7.76, -7.15),
-                map_offset=(0, 0),
-                map_shape=self.grid_map.shape
-            )
-            distance = np.hypot(x - ox, y - oy)
-            penalty += 1.0 / (distance + 1e-5)
-        return min(penalty, 5.0)
-    
     def create_odom_callback(self, robot):
         def callback(msg):
             robot.current_x = msg.pose.pose.position.x
             robot.current_y = msg.pose.pose.position.y
             orientation_q = msg.pose.pose.orientation
+            x, y = world_to_map(
+                (robot.current_x, robot.current_y),
+                resolution=0.05,
+                origin=(-7.76, -7.15),
+                map_offset=(0, 0),
+                map_shape=self.grid_map.shape
+            )
+            self.occupation_map[y][x] += 0.3
             robot.current_yaw = euler_from_quaternion(orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w)
         return callback
 
-    # def scan_callback(self, msg):
-        # self.obstacles = [r if not math.isinf(r) and not math.isnan(r) and msg.range_min < r < msg.range_max else msg.range_max for r in msg.ranges]
-    
     def create_scan_callback(self, robot):
         def callback(msg):
             raw_obstacles = [r if not math.isinf(r) and not math.isnan(r) and msg.range_min < r < msg.range_max 
@@ -547,87 +523,6 @@ class TurtleBotEnv(Node, gym.Env):
         # print(obstacle_detected)
         return obstacle_detected
     
-    # def get_next_state(self, state, action, angle):
-    #     """
-    #     Предсказывает следующее состояние на основе текущего состояния, действия и переданного угла.
-
-    #     :param state: текущее состояние [x, y, min_obstacle_dist] (без угла)
-    #     :param action: выбранное действие (0 - поворот вправо, 1 - движение вперёд, 2 - поворот влево)
-    #     :param angle: текущий угол робота (передаётся отдельно)
-    #     :return: следующее состояние [next_x, next_y, next_min_obstacle_dist], next_angle
-    #     """
-    #     current_x, current_y, _, min_obstacle_dist = state.squeeze()  # Распаковываем текущее состояние
-    #     next_x, next_y = current_x, current_y  # По умолчанию остаются неизменными
-    #     next_angle = angle # Начинаем с текущего угла
-    #     logger.info(f'Next_angel in get_next_state (current_yaw): {next_angle}') 
-    #     # print(next_angle)
-    #     # Определяем действие
-    #     if action == 0:  # Поворот вправо
-    #         next_angle = angle - 0.5  
-    #     elif action == 1:  # Движение вперёд
-    #         if not (self.x_range[0] <= next_x <= self.x_range[1] and self.y_range[0] <= next_y <= self.y_range[1]):
-    #             next_x, next_y = current_x, current_y  # Оставляем на местея
-    #         else:
-    #             next_x = current_x + np.cos(angle) * 0.2  # Двигаемся в направлении угла
-    #             next_y = current_y + np.sin(angle) * 0.2
-    #     elif action == 2:  
-    #         next_angle = angle + 0.5  # Увеличиваем угол
-
-    #     # Ограничиваем угол в диапазоне [-π, π]
-    #     next_angle = (next_angle + np.pi) % (2 * np.pi) - np.pi
-
-    #     # min_obstacle_dist остаётся прежним (или можно пересчитывать)
-    #     return np.array([next_x, next_y, next_angle, min_obstacle_dist], dtype=np.float32)
-    def get_next_state(self, state, action, angle, robot):
-        """
-        Предсказывает следующее состояние на основе текущего состояния, действия и угла.
-        :param state: текущее состояние [x, y, angle_diff, min_obstacle_dist, dynamic_cost, penalty]
-        :param action: выбранное действие (0-2)
-        :param angle: текущий угол робота (yaw)
-        :return: следующее состояние и угол
-        """
-        # Распаковываем только необходимые компоненты состояния
-        current_x = state[0]
-        current_y = state[1]
-        angle_diff = state[2]
-        min_obstacle_dist = state[3]
-        
-        next_x, next_y = current_x, current_y
-        next_angle = angle
-        
-        # Остальная логика обработки действия...
-        if action == 0:  # Поворот вправо
-            next_angle = angle - 0.5
-        elif action == 1:  # Вперёд
-            next_x = current_x + np.cos(angle) * 0.2
-            next_y = current_y + np.sin(angle) * 0.2
-        elif action == 2:  # Поворот влево
-            next_angle = angle + 0.5
-
-        next_angle = (next_angle + np.pi) % (2 * np.pi) - np.pi
-        
-        next_x_map, next_y_map = world_to_map(
-            (current_x, current_y),
-            resolution=0.05,
-            origin=(-7.76, -7.15),
-            map_offset=(0, 0),
-            map_shape=self.grid_map.shape
-        )
-        dynamic_cost = self.occupation_map[next_y_map][next_x_map] 
-        penalty = self.penalty_map[next_y_map][next_x_map]
-
-        # print(2*(dynamic_cost + penalty))
-        distance = math.sqrt((robot.target_x - next_x)**2 + (robot.target_y - next_y)**2)
-        # Сохраняем остальные компоненты состояния без изменений
-        return np.array([
-            next_x,
-            next_y,
-            angle_diff,  # Обновить при необходимости
-            min_obstacle_dist,
-            2*(dynamic_cost + penalty) if (dynamic_cost and penalty) else 1.0, 
-            distance,
-        ], dtype=np.float32)
-    
     def compute_potential_reward(self, intermediate_points, obstacle_detected, robot, k_att=10.0, k_rep=30.0, d0=5.0, lam=0.5):
         current_x = robot.state[0]
         current_y = robot.state[1]
@@ -680,7 +575,7 @@ class TurtleBotEnv(Node, gym.Env):
         # === Отталкивающее поле ===
         R_repulsive = 0.0
         if min_obstacle_dist < d0 and obstacle_detected:
-            R_repulsive = -k_rep * (1 / min_obstacle_dist - 1 / d0) ** 2
+            R_repulsive = -k_rep * (1 / min_obstacle_dist - 1 / d0) ** 2 if min_obstacle_dist!=0 else 0
             R_repulsive = np.clip(R_repulsive, -10.0, 0.0)
 
         # === Штраф за ложный путь ===
@@ -690,18 +585,18 @@ class TurtleBotEnv(Node, gym.Env):
 
         # === Суммарная награда ===
         total_reward = (
-            1.0 * R_potential +
+            2.0 * R_potential +
             1.0 * R_intermediate +
-            1.0 * grad_reward +
+            # 1.0 * grad_reward +
             1.0 * R_repulsive +
-            1.0 * R_fake_path
+            0.5 * R_fake_path
         )
         if nearest_idx > robot.last_waypoint_idx:
             passed_points = nearest_idx - robot.last_waypoint_idx
-            total_reward += 10 * passed_points
+            total_reward += 20 * passed_points
             robot.last_waypoint_idx = nearest_idx
 
-        total_reward = np.clip(total_reward, -50.0, 100.0)
+        # total_reward = np.clip(total_reward, -50.0, 100.0)
 
         # === Логгирование ===
         logger.info(f"R_potential: {R_potential:.2f}, R_intermediate: {R_intermediate:.2f}, grad: {grad_reward:.2f}, rep: {R_repulsive:.2f}, fake: {R_fake_path:.2f}, total: {total_reward:.2f}")
@@ -721,7 +616,7 @@ class TurtleBotEnv(Node, gym.Env):
         if robot.optimal_path:
             path_points = np.array(robot.optimal_path)
             distances = np.linalg.norm(path_points - np.array(current_pos), axis=1)
-            min_distance = np.min(distances)
+            min_distance = float(distances.min())
             return min_distance
         return np.inf
 
@@ -743,7 +638,7 @@ class TurtleBotEnv(Node, gym.Env):
         deviation = self.compute_deviation_from_path(robot, state)
         
         # Можно сделать штраф линейным или экспоненциальным в зависимости от задачи
-        penalty = -min(max_penalty, deviation*1.5)  # Чем дальше от пути, тем больше штраф
+        penalty = -min(max_penalty, deviation)  # Чем дальше от пути, тем больше штраф
         return penalty
     
     def compute_collision_penalty(self, robot1, robot2):
@@ -753,40 +648,23 @@ class TurtleBotEnv(Node, gym.Env):
             return -50 * (0.5 - distance)
         return 0
     
-    # def normalize_state(self, state):
-    #     return np.array([
-    #         state[0]/10.0,           
-    #         state[1]/10.0,           
-    #         state[2]/np.pi,          
-    #         state[3]/12.0,           
-    #         state[4]/100.0, 
-    #         state[5]/12,          
-    #     ], dtype=np.float32)
-    
-
     
     def step(self, actions):
         states, rewards, dones = [], [], []
         # self.occupation_map = np.zeros_like(self.grid_map, dtype=np.float32)
         # self.penalty_map = np.zeros_like(self.grid_map, dtype=np.float32)
-        self.update_dynamic_maps()
 
         for robot, action in zip(self.robots, actions):
             cmd_msg = Twist()
-            if action == 0:
-                cmd_msg.angular.z = 0.5
-            elif action == 1:
-                cmd_msg.linear.x = 0.2
-            elif action == 2:
-                cmd_msg.angular.z = -0.5
-
+            linear = float(np.clip(action[0], 0.05, 0.26))
+            angular = float(np.clip(action[1], -1.82, 1.82))
+            cmd_msg.linear.x  = linear
+            cmd_msg.angular.z = angular
             robot.cmd_vel_pub.publish(cmd_msg)
-        
             rclpy.spin_once(self, timeout_sec=0.1) 
+            prev_xw, prev_yw = robot.current_x, robot.current_y
         
             robot.steps += 1
-            
-            # print(self.obstacles)
 
             distance = math.sqrt((robot.target_x - robot.current_x) ** 2 + (robot.target_y - robot.current_y) ** 2)
             angle_to_goal = math.atan2(robot.target_y - robot.current_y, robot.target_x - robot.current_x)
@@ -795,31 +673,26 @@ class TurtleBotEnv(Node, gym.Env):
             min_obstacle_dist = min(robot.obstacles) if robot.obstacles else 3.5
 
             obstacle_detected = robot.lidar_obstacle_detected or robot.camera_obstacle_detected
-            robot.state = np.array([
-                robot.current_x,
-                robot.current_y,
-                angle_diff,
-                min_obstacle_dist])
-
-
-            states.append(robot.state)
-
-            # distance_rate = (self.past_distance - distance)
-            # print(min_obstacle_dist)
 
             reward_potent_val = self.compute_potential_reward(robot.optimal_path, obstacle_detected, robot)
             reward_optimal_path = self.get_deviation_penalty(robot.state[:2], robot)
+            
+            dx = robot.current_x - prev_xw
+            dy = robot.current_y - prev_yw
+            disp = np.array([dx, dy])
+            to_goal = np.array([robot.target_x - prev_xw, robot.target_y - prev_yw])
+            norm = np.linalg.norm(to_goal)
+            to_goal /= norm if norm>0 else 1.0
+            dist_forward = np.dot(disp, to_goal)              # скалярная проекция смещения
+            forward_reward = 100.0 * dist_forward
+            spin_penalty = - robot.beta_spin * abs(angular)
+            robot.reward = reward_potent_val + reward_optimal_path + forward_reward + spin_penalty - 0.01
 
-            robot.reward = reward_potent_val + reward_optimal_path
-            # reward += 50.0 * distance_rate
-            # self.past_distance = distance
-            # print(obstacle_detected)
             robot.done = False
 
-            # Обнаружено препятствие
             if obstacle_detected:
                 robot.obstacle_count += 1
-                robot.reward -= 50  # менее агрессивно
+                robot.reward -= 20  
                 if robot.obstacle_count >= 100:
                     robot.done = True
                     for robot in self.robots:
@@ -827,27 +700,19 @@ class TurtleBotEnv(Node, gym.Env):
 
                     print("Episode terminated due to repeated obstacle detection")
 
-            # Очень близко к препятствию
-            if min_obstacle_dist < 0.4:
-                robot.reward -= 20 * (0.5 - min_obstacle_dist)
+            if min_obstacle_dist < 0.3:
+                robot.reward -= 3.0 * (0.3 - min_obstacle_dist)
 
             if abs(robot.current_x - robot.prev_x) < 0.05 and distance > 0.35:
-                robot.reward -= 700
+                robot.reward -= 200
+
             # Достигли цели
             other = self.robots[1] if robot.namespace == 'tb0' else self.robots[0]
             if distance < 0.3:
                 print('GOAL REACHED!!!!')
-                robot.reward += 1000
-                other.reward += 700
+                robot.reward += 500
+                other.reward += 300
                 robot.done = True
-
-            prev_distance = math.sqrt((robot.target_x - robot.prev_x)**2 + (robot.target_y - robot.prev_y)**2)
-            current_distance = math.sqrt((robot.target_x - robot.current_x)**2 + (robot.target_y - robot.current_y)**2)
-            distance_reward = (prev_distance - current_distance) * 0.3  # Масштабирующий коэффициент
-            goal_distance_reward = (distance - current_distance) * 0.5
-            
-            robot.reward += (distance_reward + goal_distance_reward)
-
             if distance > 10:
                 robot.reward -= 200
                 robot.done = True 
@@ -855,62 +720,63 @@ class TurtleBotEnv(Node, gym.Env):
             if robot.steps >= robot.max_steps:
                 robot.reward -= 100
                 robot.done = True
-
-            collision_penalty = self.compute_collision_penalty(self.robots[0], self.robots[1])
-            rewards = [r + collision_penalty for r in rewards]
-            
-            # Условие завершения при столкновении
-            if collision_penalty < -10:
-                robot.reward -= 100
-                other.reward -= 100
                 for robot in self.robots:
-                    robot.done==True 
-            
-            # print(robot.reward)
-            robot.reward = self.reward_filter(robot.reward)
-            # print(robot.reward)
+                    robot.steps = 0
 
+            if math.sqrt((other.current_x - robot.current_x)**2 + (other.current_y - robot.current_y)**2) < 0.4:
+                robot.reward -= 10
+
+            prev_distance = math.sqrt((robot.target_x - robot.prev_x)**2 + (robot.target_y - robot.prev_y)**2)
+            current_distance = math.sqrt((robot.target_x - robot.current_x)**2 + (robot.target_y - robot.current_y)**2)
+            distance_reward = (prev_distance - current_distance) * 0.3  
+            goal_distance_reward = (distance - current_distance) * 0.5
+            
+            robot.reward += distance_reward + goal_distance_reward
+            robot.reward *= 0.1
             
             rewards.append(robot.reward)
+            dones.append(robot.done)
 
-
-            dones = [robot.done for robot in self.robots]
-
-        return self.get_observations(), rewards, any(dones), {}
-
-    def reset_state(self, robot, cur_pos):
-        cur_x, cur_y = cur_pos
-        cmd_msg = Twist()
-        cmd_msg.linear.x = 0.0  
-        cmd_msg.angular.z = 0.0
-        robot.cmd_vel_pub.publish(cmd_msg)  
-        rclpy.spin_once(self, timeout_sec=0.1) 
-    
-        client = self.create_client(Empty, '/reset_simulation')
-        request = Empty.Request()
-        if client.wait_for_service(timeout_sec=1.0):
-            client.call_async(request)
-        else:
-            self.get_logger().warn('Gazebo reset service not available!')
-
-        robot.current_x = cur_x
-        robot.current_y = cur_y
-        robot.current_yaw = 0.0
-        robot.steps = 0
-        robot.prev_distance = None
-        robot.obstacles = []
-        robot.camera_obstacle_detected = False
-        robot.done = False
-        
-        return np.array([robot.current_x, robot.current_y, 0.0, 0.0])
+        return self.get_observations(), rewards, dones, {}
     
     def reset(self):
         states = []
         spawn_points = [[-0.7, 0.05], [-2.5, 0.05]]
-
         for i, robot in enumerate(self.robots):
-            robot.state = self.reset_state(robot, spawn_points[i])
+            cur_x, cur_y = spawn_points[i]
+            cmd_msg = Twist()
+            cmd_msg.linear.x = 0.0  
+            cmd_msg.angular.z = 0.0
+            robot.cmd_vel_pub.publish(cmd_msg)  
+            rclpy.spin_once(self, timeout_sec=0.1) 
+        client = self.create_client(Empty, '/reset_world')
+        request = Empty.Request()
+
+        if client.wait_for_service(timeout_sec=1.0):
+            future = client.call_async(request)
+            while not future.done():
+                rclpy.spin_once(self, timeout_sec=0.1)
+        else:
+            self.get_logger().warn('Gazebo reset service not available!')
+        timeout_counter = 0
+        while (abs(self.robots[0].current_x) < 0.01 and abs(self.robots[0].current_y) < 0.01 and 
+            abs(self.robots[0].current_yaw) < 1e-3 and timeout_counter < 50) and (abs(self.robots[1].current_x) < 0.01
+                                                                                   and abs(self.robots[1].current_y) < 0.01 and 
+            abs(self.robots[1].current_yaw) < 1e-3 and timeout_counter < 50):
+            rclpy.spin_once(self, timeout_sec=0.1)
+            timeout_counter += 1
+
         for robot in self.robots:
+            robot.current_x = cur_x
+            robot.current_y = cur_y
+            robot.current_yaw = 0.0
+            robot.steps = 0
+            robot.obstacle_count = 0
+            robot.prev_distance = None
+            robot.obstacles = []
+            robot.camera_obstacle_detected = False
+            robot.done = False
+
             x, y = world_to_map(
                 (robot.current_x, robot.current_y),
                 resolution=0.05,
@@ -918,23 +784,18 @@ class TurtleBotEnv(Node, gym.Env):
                 map_offset=(0, 0),
                 map_shape=self.grid_map.shape
             )
-                
+            angle_to_goal = math.atan2(robot.target_y - robot.current_y, robot.target_x - robot.current_x)
+            angle_diff = (angle_to_goal - robot.current_yaw + np.pi) % (2 * np.pi) - np.pi
+            min_obstacle_dist = 3.5 if not robot.obstacles else min(robot.obstacles)
             dynamic_cost = self.occupation_map[y][x]
             penalty = self.penalty_map[y][x]
+
             distance = math.sqrt((robot.target_x - robot.current_x) ** 2 + (robot.target_y - robot.current_y) ** 2)
                 
-            robot.state = np.concatenate([
-                robot.state,
-                [2*(dynamic_cost + penalty), distance]  
-                ])
-            # print("state before:",robot.state)
-
-            robot.state = self.state_filter(robot.state)
-            # print("state after:",robot.state)
-            
+            state = np.array([robot.current_x, robot.current_y, angle_diff, min_obstacle_dist, 2*(dynamic_cost + penalty), distance])
+            robot.state = self.state_filter(state)
             states.append(robot.state)
-            # states = [self.normalize_state(state) for state in states]
-        return states
+        return np.array(states)
     
     def visualize_path(self, robot, path):
         path_marker = Marker()
