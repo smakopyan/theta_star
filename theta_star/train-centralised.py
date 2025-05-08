@@ -1,24 +1,20 @@
 import numpy as np
 import tensorflow as tf
-from keras import layers
 import rclpy
-from turtlebot_env import TurtleBotEnv, Zfilter, RunningStat
-from critic import ImprovedCritic, StaticCritic, world_to_map
+from turtlebot_env import TurtleBotEnv, Zfilter
+from critic import ImprovedCritic, world_to_map
 from actor import ImprovedActor
-import cv2
 import matplotlib.pyplot as plt
 from scipy.ndimage import distance_transform_edt
-import logging
-import signal
 import sys
 import traceback
 from ament_index_python.packages import get_package_share_directory
 import os
-import signal
 import subprocess
 import sys
 from tensorflow import summary
 from datetime import datetime
+
 
 # --- Класс агента PPO ---
 class PPOAgent:
@@ -27,11 +23,11 @@ class PPOAgent:
         self.num_robots = env.num_robots
         self.state_dim = env.observation_space.shape[0]
         self.state_dims = [env.observation_space.shape[0], env.observation_space.shape[0]]
-
+        self.state_dim = env.observation_space.shape[0]  # Размер наблюдения одного агента
+        self.action_dim = env.action_space.shape[0]      # Размер действия одного агента
+        self.combined_state_dim = self.num_robots * (self.state_dim + self.action_dim * (self.num_robots - 1))
         self.action_dims = [env.action_space.shape[0], env.action_space.shape[0]]
         self.grid_map = env.grid_map
-        self.reward_filter = Zfilter(prev_filter=None, shape=(), center = False, \
-                                            clip=1.0)
 
         self.best_models = np.zeros(self.num_robots)
 
@@ -47,45 +43,42 @@ class PPOAgent:
         # ]
 
         # Коэффициенты
-        self.gamma = 0.99  # коэффициент дисконтирования
+        self.gamma = 0.995  # коэффициент дисконтирования
         self.epsilon = 0.15 # параметр клиппинга
         self.actor_lrs = [0.0003] * self.num_robots
-        self.critic_lrs = [0.0003] * self.num_robots
+        self.critic_lr = 0.0003
         self.gaelam = 0.95
         self.min_entropy = 0.0001
         self.max_entropy = 0.01
         # self.alpha = 0.1
+        current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
+
+        self.log_dir = f'logs/ppo/{current_time}'
+
+        self.summary_writers = {
+            i: summary.create_file_writer(f'{self.log_dir}/robot_{i}')
+            for i in range(self.num_robots)
+        }
+        self.global_step = 0
+        self.state_filter = Zfilter(prev_filter=None, shape=self.env.observation_space.shape[0], clip=1.0)
+        self.reward_filter = Zfilter(prev_filter=None, shape=(), center = False, \
+                                            clip=1.0)
 
         self.actors = [
             ImprovedActor(state_dim, action_dim) 
             for state_dim, action_dim in zip(self.state_dims, self.action_dims)
         ]
 
-        self.critics = [
-            ImprovedCritic(self.state_dims[i], env.grid_map, env.robots[i].optimal_path)
-            for i in range(self.num_robots)
-        ]
+
 
         self.actor_optimizers = [
             tf.keras.optimizers.Adam(learning_rate=lr) 
             for lr in self.actor_lrs
         ]
         
-        self.critic_optimizers = [
-            tf.keras.optimizers.Adam(learning_rate=lr)
-            for lr in self.critic_lrs
-        ]
-
-        current_time = datetime.now().strftime("%Y%m%d-%H%M%S")
-        self.log_dir = f'logs/ppo/{current_time}'
-        self.summary_writers = {
-            i: summary.create_file_writer(f'{self.log_dir}/robot_{i}')
-            for i in range(self.num_robots)
-        }
-
-        self.global_step = 0
-        self.state_filter = Zfilter(prev_filter=None, shape=self.env.observation_space.shape[0], clip=1.0)
-
+        self.critic = ImprovedCritic(self.combined_state_dim, env.grid_map, env.robots[0].optimal_path)
+        self.critic_optimizer = tf.keras.optimizers.Adam(learning_rate=self.critic_lr)
+    
     def get_action(self, states):
         actions = []
         log_probs = []
@@ -126,23 +119,23 @@ class PPOAgent:
             robot_advantages = np.zeros_like(rewards[i])
             robot_returns = np.zeros_like(rewards[i])
             last_gae = 0
-            next_value = values[i][-1]
+            next_value = values[-1]
             for t in reversed(range(len(rewards[i]))):
                 # Обработка последнего шага
                 if t == len(rewards[i]) - 1:
-                    next_value = values[i][-1]
+                    next_value = values[-1]
                     next_done = dones[i][t]  
                 else:
                     # Обработка остальных шагов
-                    next_value = values[i][t + 1]
+                    next_value = values[t + 1]
                     next_done = dones[i][t + 1]
 
                 # Вычисление ошибки предсказания
-                delta = rewards[i][t] + self.gamma * next_value * (1 - next_done) - values[i][t]
+                delta = rewards[i][t] + self.gamma * next_value * (1 - next_done) - values[t]
                 # if np.isnan(delta):
                 #     print(f"NaN in delta: rewards[{t}]={rewards[t]}, next_value={next_value}, values[{t}]={values[t]}")
                 robot_advantages[t] = last_gae = delta + self.gamma * self.gaelam * (1 - next_done) * last_gae
-                robot_returns[t] = robot_advantages [t] + values[i][t]  
+                robot_returns[t] = robot_advantages [t] + values[t]  
             # print('Advanteges:', advantages)
         # Возвраты для обновления критика
             robot_advantages = (robot_advantages - np.mean(robot_advantages)) / (np.std(robot_advantages) + 1e-10)
@@ -151,19 +144,19 @@ class PPOAgent:
             advantages.append(robot_advantages)
             returns.append(robot_returns)
 
+
         return advantages, returns 
     # Обновление политик
-    def update(self, states, actions, advantages, returns, log_probs_old, entropy_coef, raw_actions, agent_ind):
+    def actor_update(self, states, actions, advantages, log_probs_old, entropy_coef, raw_actions, agent_idx):
         states = tf.convert_to_tensor(states, dtype=tf.float32)
         actions = tf.convert_to_tensor(actions, dtype=tf.float32)
         log_probs_old = tf.convert_to_tensor(log_probs_old, dtype=tf.float32)
         advantages = tf.convert_to_tensor(advantages, dtype=tf.float32)
-        returns = tf.convert_to_tensor(returns, dtype=tf.float32)
         raw_actions = tf.convert_to_tensor(raw_actions, dtype=tf.float32)
 
         # === Actor update ===
         with tf.GradientTape() as tape:
-            log_probs, entropy = self.actors[agent_ind](states, training = True, raw_actions = raw_actions)
+            log_probs, entropy = self.actors[agent_idx](states, training = True, raw_actions = raw_actions)
             log_probs = tf.debugging.check_numerics(log_probs, message="log_probs contain NaN")
             # log_probs = tf.reduce_sum(log_probs, axis=-1)
             ratios = tf.exp(log_probs - log_probs_old)
@@ -178,31 +171,32 @@ class PPOAgent:
 
             # actor_loss_full = actor_loss - entropy_coef * entropy_bonus
 
-        actor_grads = tape.gradient(actor_loss_full, self.actors[agent_ind].trainable_variables)
+        actor_grads = tape.gradient(actor_loss_full, self.actors[agent_idx].trainable_variables)
         # actor_grads = [tf.clip_by_norm(g, 0.5) for g in actor_grads]
 
-        self.actor_optimizers[agent_ind].apply_gradients(zip(actor_grads, self.actors[agent_ind].trainable_variables))
-        # === Critic update ===
-        with tf.GradientTape() as tape:
-            
-            values = self.critics[agent_ind].call(states, training = True)  # shape (batch, 1)
-            critic_loss = tf.reduce_mean(tf.square(returns - values))
-
-        critic_grads = tape.gradient(critic_loss, self.critics[agent_ind].trainable_variables)
-        # critic_grads = [tf.clip_by_norm(g, 0.5) for g in critic_grads]
-
-        self.critic_optimizers[agent_ind].apply_gradients(zip(critic_grads, self.critics[agent_ind].trainable_variables))
-          # Добавляем логирование метрик
-        with self.summary_writers[agent_ind].as_default():
-            summary.scalar('Actor Loss', actor_loss.numpy(), step=self.global_step)
-            summary.scalar('Critic Loss', critic_loss.numpy(), step=self.global_step)
-            summary.scalar('Entropy', tf.reduce_mean(entropy).numpy(), step=self.global_step)
-            summary.scalar('Learning Rate', self.actor_optimizers[agent_ind].learning_rate.numpy(), step=self.global_step)
+        self.actor_optimizers[agent_idx].apply_gradients(zip(actor_grads, self.actors[agent_idx].trainable_variables))
+        with self.summary_writers[agent_idx].as_default():
+            summary.scalar('Actor Loss', actor_loss_full.numpy(), step=self.global_step)
+            summary.scalar('Learning Rate', self.actor_optimizers[agent_idx].learning_rate.numpy(), step=self.global_step)
             summary.histogram('Actions', actions, step=self.global_step)
             summary.histogram('Advantages', advantages, step=self.global_step)
+    
+    def critic_update(self, returns, combined_states):
+        combined_states = tf.convert_to_tensor(combined_states, dtype=tf.float32)
+        returns = tf.convert_to_tensor(returns, dtype=tf.float32)
+        # === Critic update ===
+        with tf.GradientTape() as tape:  
+            values = self.critic.call(combined_states, training = True)  # shape (batch, 1)
+            critic_loss = tf.reduce_mean(tf.square(returns - values))
 
-    def update_entropy_coef(self, episode, max_episodes):   
-        entropy_coef = self.max_entropy * (0.5 ** (episode / (max_episodes/2)))
+        critic_grads = tape.gradient(critic_loss, self.critic.trainable_variables)
+        self.critic_optimizer.apply_gradients(zip(critic_grads, self.critic.trainable_variables))
+        with summary.create_file_writer(self.log_dir).as_default():
+            summary.scalar('Critic Loss', critic_loss.numpy(), step=self.global_step)
+
+    def update_entropy_coef(self, episode, max_episodes):
+        decay_rate = 0.95
+        entropy_coef = self.max_entropy * (decay_rate ** (episode / (max_episodes/10)))
         return np.clip(entropy_coef, self.min_entropy, self.max_entropy)
     
     def save_models(self):
@@ -215,30 +209,29 @@ class PPOAgent:
         episodes_x, avg_y = [], []
         window = 5
         for episode in range(max_episodes):
-            if episode > 200:
-                batch_size = 64
-            if episode > 400:
-                batch_size = 128
-            self.env.occupation_map = np.zeros_like(self.env.grid_map, dtype=np.float32)
-            self.env.penalty_map = np.ones_like(self.env.grid_map, dtype=np.float32)
+            agents_order = np.random.permutation(self.num_robots)  # Случайный порядок
+
+            
             print('----------------------------------------------------------------------------')
             print("Episode: ",episode)
 
+
             states = self.env.reset()
             states = [self.state_filter(state) for state in states]
-
             episode_rewards = [0] * num_robots
             done = False
-
-            batch_data = {i: {
-                'states': [], 
-                'actions': [], 
-                'rewards': [],
-                'dones': [], 
-                'values_learned': [], 
-                'raw_actions': [], 
-                'log_probs': []
-            } for i in range(num_robots)}
+            batch_data = {
+                'combined_states': [],
+                'values': [],
+                'states': [[] for _ in range(num_robots)],
+                'rewards': [[] for _ in range(num_robots)],
+                'dones': [[] for _ in range(num_robots)],
+                'actions': [[] for _ in range(num_robots)],
+                'log_probs': [[] for _ in range(num_robots)],
+                'raw_actions': [[] for _ in range(num_robots)],
+                'advantages': [[] for _ in range(num_robots)],
+                'returns': [[] for _ in range(num_robots)]
+            }
             
             step = 0
 
@@ -247,74 +240,93 @@ class PPOAgent:
                 actions, log_probs, _,_, raw_actions = self.get_action(states)
                 # logger.info(f'Action:  {action}')
                 # logger.info(f'Prob:  {prob}')
+                modified_states = []
+                for i in range(self.num_robots):
+                    other_actions = np.concatenate([actions[j] for j in range(self.num_robots) if j != i])
+                    modified_state = np.concatenate([states[i], other_actions])
+                    modified_states.append(modified_state)
+
+                # Объединенное состояние для критика
+                combined_state = np.concatenate(modified_states)  # Размерность: N*(S + A*(N-1))
+
+                # Шаг среды
                 next_states, rewards, dones, _ = self.env.step(actions)
                 # rewards = [self.reward_filter(reward) for reward in rewards]
 
-                next_states = [self.state_filter(state) for state in next_states]
-
+                # Аналогично формируем next_states
+                modified_next_states = []
+                for i in range(self.num_robots):
+                    other_actions = np.concatenate([actions[j] for j in range(self.num_robots) if j != i])
+                    modified_next_state = np.concatenate([next_states[i], other_actions])
+                    modified_next_states.append(modified_next_state)
                 
+                combined_next_state = np.concatenate(modified_next_states)
                 # if isinstance(dones, bool):
                 #     dones = [dones] * self.num_robots
                 if np.isnan(next_states).any():
                     print("Обнаружен NaN в состоянии!")
                     break
-                
-                next_states = [np.reshape(next_state, [1, self.state_dim])for next_state in next_states]
-                values_learned = [float(self.critics[i].call(state)[0, 0].numpy()) for i, state in enumerate(states)]
-                # training_logger.info(f'Value learned:  {values_learned}')
 
-                for i in range(self.num_robots):
-                    batch_data[i]['states'].append(states[i])
-                    batch_data[i]['actions'].append(actions[i])
-                    batch_data[i]['rewards'].append(rewards[i])
-                    batch_data[i]['dones'].append(dones[i])
-                    batch_data[i]['values_learned'].append(values_learned[i])
-                    batch_data[i]['log_probs'].append(log_probs[i])
-                    batch_data[i]['raw_actions'].append(raw_actions[i])
+                batch_data['combined_states'].append(combined_state)
+                next_states = np.reshape(combined_next_state, [1, self.combined_state_dim])
+
+                values_learned = float(self.critic.call(combined_state)[0, 0].numpy())
+                
+                # training_logger.info(f'Value learned:  {values_learned}')
+                # value = self.critic(tf.expand_dims(combined_state, 0))
+                batch_data['values'].append(values_learned)
+                for i in agents_order:
+                    batch_data['states'][i].append(states[i])
+                    batch_data['actions'][i].append(actions[i])
+                    batch_data['rewards'][i].append(rewards[i])
+                    batch_data['dones'][i].append(dones[i])
+                    batch_data['log_probs'][i].append(log_probs[i])
+                    batch_data['raw_actions'][i].append(raw_actions[i])
                     episode_rewards[i] += rewards[i]
                     done = any(dones) or (step >= self.env.max_steps)
                 
-                states = next_states
+                # states = next_states
                 step += 1
 
             if done or step % batch_size == 0:
-                for i in range(self.num_robots):
-                    next_values_learned = float(self.critics[i].call(next_states[i])[0, 0].numpy()) 
-                    batch_data[i]['values_learned'].append(next_values_learned)
+                next_values_learned = float(self.critic.call(next_states)[0, 0].numpy()) 
+                batch_data['values'].append(next_values_learned)
                     
                 advantages, returns = self.compute_advantages(
-                    [batch_data[i]['rewards'] for i in range(self.num_robots)],
-                    [batch_data[i]['values_learned'] for i in range(self.num_robots)],
-                    [batch_data[i]['dones'] for i in range(self.num_robots)]
+                    [batch_data['rewards'][i] for _ in range(self.num_robots)],
+                    batch_data['values'],
+                    [batch_data['dones'][i] for _ in range(self.num_robots)]
                 )
+
                 entropy_coef = self.update_entropy_coef(episode, max_episodes)
 
-                for i in range(self.num_robots):
-                    batch_data[i]['advantages'] = advantages[i]
-                    batch_data[i]['returns'] = returns[i]
-                    self.update(
-                        np.vstack(batch_data[i]['states']),
-                        batch_data[i]['actions'],
-                        batch_data[i]['advantages'],
-                        batch_data[i]['returns'],
-                        batch_data[i]['log_probs'],
+                for i in agents_order:
+                    batch_data['advantages'][i] = advantages[i]
+                    batch_data['returns'][i] = returns[i]
+                    self.actor_update(
+                        np.vstack(batch_data['states'][i]),
+                        batch_data['actions'][i],
+                        batch_data['advantages'][i],
+                        batch_data['log_probs'][i],
                         entropy_coef,
-                        batch_data[i]['raw_actions'],
+                        batch_data['raw_actions'][i],
                         i)
-                    
+                    self.critic_update(
+                        np.concatenate([np.array(batch_data['returns'][i]) for i in range(self.num_robots)]),
+                        np.array(batch_data['combined_states'])
+                    )
+
                     if episode_rewards[i] > self.best_models[i]:
                         print(f"prev reward: {self.best_models[i]}, new reward {episode_rewards[i]}")
                         self.actors[i].save(f'ppo_actor_robot_{i}_best.keras')
                         print(' ...saving model... ')
                         self.best_models[i] = episode_rewards[i]
 
+                # for i in range(self.num_robots):
+                #     batch_data[i] = {k: [] for k in batch_data[i]}
 
-
-                for i in range(self.num_robots):
-                    batch_data[i] = {k: [] for k in batch_data[i]}
-
-                if done:
-                    step = 0
+                # if done:
+                #     step = 0
                 #     break
 
 
@@ -324,7 +336,6 @@ class PPOAgent:
             print(f"  Robot 1 Reward: {episode_rewards[0]:.2f}")
             print(f"  Robot 2 Reward: {episode_rewards[1]:.2f}")
             print(f"  Average Reward: {avg_reward:.2f}")
-
             with summary.create_file_writer(self.log_dir).as_default():
                 summary.scalar('Average Reward', avg_reward, step=episode)
                 summary.scalar('Max Reward', np.max(episode_rewards), step=episode)
@@ -347,8 +358,7 @@ class PPOAgent:
                 plt.ylabel(f"Avg Reward ({window})")
                 plt.title("Training Progress")
                 plt.pause(0.01)
-                plt.savefig(os.path.join('logs', 'train_decentr'))
-
+                plt.savefig(os.path.join('logs', 'train_centr'))
             print(f'Episode {episode + 1}, Reward: {avg_reward}')
 
 
@@ -356,6 +366,7 @@ class PPOAgent:
             self.actors[i].save(f'ppo_actor_robot_{i}.keras')
         for writer in self.summary_writers.values():
             writer.close()
+
 
         return all_rewards
 
@@ -378,7 +389,7 @@ def main(args=None):
 
     finally: 
         rclpy.shutdown()
-        shutdown_handler(None, None)
+        # shutdown_handler(None, None)
 
 if __name__ == '__main__':
     main()

@@ -10,7 +10,6 @@ import math
 from std_srvs.srv import Empty
 from cv_bridge import CvBridge
 import cv2
-import collections
 from theta_star import ThetaStar
 import matplotlib.pyplot as plt
 from collections import deque
@@ -24,6 +23,11 @@ from std_msgs.msg import Header
 from rclpy.qos import QoSProfile, QoSDurabilityPolicy, QoSHistoryPolicy, QoSReliabilityPolicy
 from tf2_ros import Buffer, TransformListener
 from rclpy.time import Time
+from std_srvs.srv import Empty
+from gazebo_msgs.srv import SetModelState
+from gazebo_msgs.msg import ModelStates, ModelState
+from gazebo_msgs.srv import SetEntityState
+from gazebo_msgs.msg import EntityState
 
 logging.basicConfig(filename='training_logs.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -79,11 +83,7 @@ def world_to_map(world_coords, resolution, origin, map_offset, map_shape):
 
 
 
-def euler_from_quaternion(quaternion):
-    x = quaternion.x
-    y = quaternion.y
-    z = quaternion.z
-    w = quaternion.w
+def euler_from_quaternion(x, y , z, w):
 
     sinr_cosp = 2 * (w * x + y * z)
     cosr_cosp = 1 - 2 * (x * x + y * y)
@@ -151,11 +151,12 @@ def generate_potential_field(grid_map, goal, path_points, k_att=1.0, k_rep=20.0,
     return field
 
 class Robot():
-    def __init__(self, namespace, state_pos, goal):
+    def __init__(self, namespace, state_pos, goal, grid_map):
         self.namespace = namespace
         self.occupations = None
         self.penalties = None
         self.cmd_vel_pub = None
+        self.occupation_pub = None
         self.obstacle_detected = False
         self.bridge = CvBridge()
         self.camera_obstacle_detected = False
@@ -196,6 +197,7 @@ class Robot():
         self.penalty = 0.0
         self.last_waypoint_idx = 0
         self.beta_spin = 0.1
+        self.occupation_map = np.zeros_like(grid_map, dtype=np.float32)
 
 class RunningStat(object):
     def __init__(self,shape):
@@ -265,22 +267,24 @@ class TurtleBotEnv(Node, gym.Env):
     def __init__(self):
         super().__init__('turtlebot_env')
         self.num_robots = 2
-        spawn_points = [[-0.7, 0.05], [-2.5, 0.05]]
+        spawn_points = [[2.0, -5.0], [2.0, -2.0]]
         # goals = [[0.483287, -2.73528],[0.583933, -3.66662] ]
-        goals = [[-4.0, 0.05], [1.0, 0.05]]
+        goals = [[2.0, -2.0], [2.0, -5.0]]
 
-        self.robots = [Robot(f"tb{i}", spawn_points[i], goals[i]) for i in range(self.num_robots)]
 
         slam_map = cv2.imread(os.path.join(get_package_share_directory('theta_star'),
                                            'maps','map3.pgm'), cv2.IMREAD_GRAYSCALE)
         
   
         self.grid_map = slam_to_grid_map(slam_map)
+        self.robots = [Robot(f"tb{i}", spawn_points[i], goals[i], self.grid_map) for i in range(self.num_robots)]
 
         self.map_initialized = False
-        self.occupation_map = np.zeros_like(self.grid_map, dtype=np.float32)
+        # self.occupation_map = np.zeros_like(self.grid_map, dtype=np.float32)
         self.penalty_map = np.ones_like(self.grid_map, dtype=np.float32)
         self.max_steps = 100
+        self.reset_world = self.create_client(Empty, '/reset_world')
+        self.set_state = self.create_client(SetEntityState, "/gazebo/set_entity_state")
 
         qos_profile = QoSProfile(
             depth=5,
@@ -290,9 +294,9 @@ class TurtleBotEnv(Node, gym.Env):
         )
 
         self.gridmap_pub = self.create_publisher(OccupancyGrid, '/grid_costmap', qos_profile)
-        # self.occupation_pub = self.create_publisher(OccupancyGrid, '/occupation_costmap', 10)
         for robot in self.robots:
             robot.cmd_vel_pub = self.create_publisher(Twist, f'/{robot.namespace}/cmd_vel', 10)
+            robot.occupation_pub = self.create_publisher(OccupancyGrid, f'/{robot.namespace}/occupation_costmap', qos_profile)
             
             robot.path_marker_pub = self.create_publisher(
                 Marker, 
@@ -319,7 +323,8 @@ class TurtleBotEnv(Node, gym.Env):
                 self.create_camera_callback(robot),
                 10
             )
-            optimal_path_ = self.path(robot, self.grid_map, self.occupation_map, self.penalty_map)
+            other = self.robots[1] if robot.namespace == 'tb0' else self.robots[0] 
+            optimal_path_ = self.path(robot, self.grid_map, other.occupation_map, self.penalty_map)
             
             robot.optimal_path = self.interpolate_path(optimal_path_)
             # print(robot.optimal_path)
@@ -328,7 +333,7 @@ class TurtleBotEnv(Node, gym.Env):
                     
         self.x_range = [-10,10]
         self.y_range = [-10,10]
-        self.action_space = spaces.Box(low=np.array([0.05, -1.82]), high=np.array([0.26, 1.82]), dtype=np.float32)
+        self.action_space = spaces.Box(low=np.array([0.05, -0.82]), high=np.array([0.26, 0.82]), dtype=np.float32)
 
         self.observation_space = spaces.Box(
             low=np.array([-1.0, -1.0, -1.0, 0.0, 0.0, 0.0]),  
@@ -342,10 +347,10 @@ class TurtleBotEnv(Node, gym.Env):
 
         self.state_filter = Zfilter(prev_filter=None, shape=self.observation_space.shape[0], clip=1.0)
         self.reward_filter = Zfilter(prev_filter=None, shape=(), center = False, \
-                                            clip=5.0)
+                                            clip=1.0)
     
     def path(self, robot, grid_map, occupation_map, penalty_map,  map_resolution = 0.05, map_origin = (-7.76,-7.15)):
-        spawn_points = [[-0.7, 0.05], [-2.5, 0.05]]
+        spawn_points = [[2.0, -5.0], [2.0, -2.0]]
         if robot.namespace == 'tb0':
             state_world = world_to_map(spawn_points[0], 0.05, (-7.76,-7.15), (0,0), grid_map.shape)
         else:
@@ -371,10 +376,12 @@ class TurtleBotEnv(Node, gym.Env):
 
     def _timer_callback(self):
         pass
+        # self.publish_grid_map()
         # for robot in self.robots:
-        #     robot.optimal_path = self.path(robot, self.grid_map, self.occupation_map, self.penalty_map)
+        #     # robot.optimal_path = self.path(robot, self.grid_map, self.occupation_map, self.penalty_map)
         #     path_= self.get_path(robot.optimal_path)
         #     self.visualize_path(robot, path_)
+        #     self.publish_occupation_map(robot)
 
     def get_path(self, opt_path):
         path = [grid_to_world(i[0], i[1], map_shape = self.grid_map.shape) for i in opt_path]
@@ -390,8 +397,9 @@ class TurtleBotEnv(Node, gym.Env):
                 map_offset=(0, 0),
                 map_shape=self.grid_map.shape
             )
+            other = self.robots[1] if robot.namespace == 'tb0' else self.robots[0]
             
-            dynamic_cost = self.occupation_map[y][x]
+            dynamic_cost = other.occupation_map[y][x]
             penalty = self.penalty_map[y][x]
             distance = math.sqrt((robot.target_x - robot.current_x) ** 2 + (robot.target_y - robot.current_y) ** 2)
             angle_to_goal = math.atan2(robot.target_y - robot.current_y, robot.target_x - robot.current_x)
@@ -399,7 +407,7 @@ class TurtleBotEnv(Node, gym.Env):
             min_obstacle_dist = 3.5 if not robot.obstacles else min(robot.obstacles)
 
             obs = np.array([robot.current_x, robot.current_y, angle_diff, min_obstacle_dist, 2*(dynamic_cost + penalty), distance])
-            obs = self.state_filter(obs)
+            # print(obs)
             observations.append(obs)
         return np.array(observations)
     
@@ -416,7 +424,7 @@ class TurtleBotEnv(Node, gym.Env):
             for t in np.linspace(0, 1, num_points):
                 point = start * (1 - t) + end * t
                 interpolated.append([point[1], point[0]])
-        interpolated = [(int(round(x)), int(round(y))) for (x, y) in interpolated]
+        interpolated = [[int(round(x)), int(round(y))] for (x, y) in interpolated]
         return interpolated
 
     def create_odom_callback(self, robot):
@@ -431,7 +439,17 @@ class TurtleBotEnv(Node, gym.Env):
                 map_offset=(0, 0),
                 map_shape=self.grid_map.shape
             )
-            self.occupation_map[y][x] += 0.3
+            height, width = self.grid_map.shape
+
+            robot.occupation_map[y][x] += 0.3
+            for dx in range(-4, 5):
+                for dy in range(-4, 5):
+                    nx = x + dx
+                    ny = y + dy
+                    if 0 <= nx < width and 0 <= ny < height:
+                        robot.occupation_map[ny][nx] += 0.3 
+            robot.current_yaw = euler_from_quaternion(orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w)
+
             robot.current_yaw = euler_from_quaternion(orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w)
         return callback
 
@@ -607,10 +625,10 @@ class TurtleBotEnv(Node, gym.Env):
             1.0 * R_repulsive +
             0.5 * R_fake_path
         )
-        if nearest_idx > robot.last_waypoint_idx:
-            passed_points = nearest_idx - robot.last_waypoint_idx
-            total_reward += 20 * passed_points
-            robot.last_waypoint_idx = nearest_idx
+        # if nearest_idx > robot.last_waypoint_idx:
+        #     passed_points = nearest_idx - robot.last_waypoint_idx
+        #     total_reward += 30 * passed_points
+        #     robot.last_waypoint_idx = nearest_idx
 
         # total_reward = np.clip(total_reward, -50.0, 100.0)
 
@@ -673,7 +691,7 @@ class TurtleBotEnv(Node, gym.Env):
         for robot, action in zip(self.robots, actions):
             cmd_msg = Twist()
             linear = float(np.clip(action[0], 0.05, 0.26))
-            angular = float(np.clip(action[1], -1.82, 1.82))
+            angular = float(np.clip(action[1], -0.82, 0.82))
             cmd_msg.linear.x  = linear
             cmd_msg.angular.z = angular
             robot.cmd_vel_pub.publish(cmd_msg)
@@ -699,16 +717,19 @@ class TurtleBotEnv(Node, gym.Env):
             to_goal = np.array([robot.target_x - prev_xw, robot.target_y - prev_yw])
             norm = np.linalg.norm(to_goal)
             to_goal /= norm if norm>0 else 1.0
-            dist_forward = np.dot(disp, to_goal)              # скалярная проекция смещения
+            dist_forward = np.dot(disp, to_goal)            
             forward_reward = 100.0 * dist_forward
             spin_penalty = - robot.beta_spin * abs(angular)
             robot.reward = reward_potent_val + reward_optimal_path + forward_reward + spin_penalty - 0.01
+            # print(f"{robot.namespace} {robot.reward} потенциальная награда")
 
             robot.done = False
 
             if obstacle_detected:
                 robot.obstacle_count += 1
-                robot.reward -= 20  
+                # print(f"{robot.namespace} reward до {robot.reward} обнаружения препятствия")
+                robot.reward -= 50  
+                # print(f"{robot.namespace} reward после {robot.reward} обнаружения препятствия")
                 if robot.obstacle_count >= 100:
                     robot.done = True
                     for robot in self.robots:
@@ -717,39 +738,67 @@ class TurtleBotEnv(Node, gym.Env):
                     print("Episode terminated due to repeated obstacle detection")
 
             if min_obstacle_dist < 0.3:
+                # print(f"{robot.namespace} reward до {robot.reward} обнаружения препятствия ОЧЕНЬ БЛИЗКО")
+
                 robot.reward -= 3.0 * (0.3 - min_obstacle_dist)
+                # print(f"{robot.namespace} reward после {robot.reward} обнаружения препятствия ОЧЕНЬ БЛИЗКО")
 
-            if abs(robot.current_x - robot.prev_x) < 0.05 and distance > 0.35:
-                robot.reward -= 200
+            if abs(robot.current_x - robot.prev_x) < 0.01 and distance > 0.35:
+                # print(f"{robot.namespace} reward до {robot.reward} (остался в той же точке что и был)")
+                robot.reward -= 60
+                # print(f"{robot.namespace} reward после {robot.reward} (остался в той же точке что и был)")
 
-            # Достигли цели
             other = self.robots[1] if robot.namespace == 'tb0' else self.robots[0]
             if distance < 0.3:
                 print('GOAL REACHED!!!!')
-                robot.reward += 500
-                other.reward += 300
+                robot.reward += 600
                 robot.done = True
             if distance > 10:
-                robot.reward -= 200
+                robot.reward -= 100
                 robot.done = True 
-            # Превышен лимит шагов
             if robot.steps >= robot.max_steps:
+            # if robot.steps >= 5:
                 robot.reward -= 100
                 robot.done = True
                 for robot in self.robots:
                     robot.steps = 0
 
+            if robot.last_waypoint_idx < len(robot.optimal_path):
+                wp = robot.optimal_path[robot.last_waypoint_idx]
+                wp_world = grid_to_world(wp[0],wp[1],self.grid_map)
+                # print('robot.current_x - wp_world[0], robot.current_y - wp_world[1]')
+                # print(f'{robot.current_x} - {wp_world[0]}, {robot.current_y} - {wp_world[1]}')
+                d_wp = math.hypot(robot.current_x - wp_world[0], robot.current_y - wp_world[1])
+                if d_wp < 0.3:
+                    print('Int point reached')
+                    # print(f"{robot.namespace} reward {robot.reward} before reaching wp")
+                    robot.reward += 50.0
+                    robot.last_waypoint_idx += 1
+                    # print(f"{robot.namespace} reward {robot.reward} after reaching wp")
+
             if math.sqrt((other.current_x - robot.current_x)**2 + (other.current_y - robot.current_y)**2) < 0.4:
-                robot.reward -= 10
+                # print(f"{robot.namespace} reward {robot.reward} before collision with other")
+                robot.reward -= 20
+                # print(f"{robot.namespace} reward {robot.reward} after collision with other")
+
 
             prev_distance = math.sqrt((robot.target_x - robot.prev_x)**2 + (robot.target_y - robot.prev_y)**2)
             current_distance = math.sqrt((robot.target_x - robot.current_x)**2 + (robot.target_y - robot.current_y)**2)
-            distance_reward = (prev_distance - current_distance) * 0.3  
-            goal_distance_reward = (distance - current_distance) * 0.5
-            
-            robot.reward += distance_reward + goal_distance_reward
-            robot.reward *= 0.1
-            
+            # print(f"{robot.namespace} reward {robot.reward} до награды за близость к цели")
+            distance_reward = (prev_distance - current_distance) * 0.05 if (prev_distance - current_distance) > 0 else (prev_distance - current_distance) * 0.05
+            # print(f"{robot.namespace} reward distance_reward {distance_reward} ")
+            if distance != 0:
+                goal_distance_reward = (1 / distance + 1e-5) * 8 if distance <= 2. else -(1 / distance + 1e-5) * 8
+            # print(f"{robot.namespace} reward goal_distance_reward {goal_distance_reward} ")
+
+                robot.reward += distance_reward + goal_distance_reward
+            robot.reward += distance_reward
+            # print(f"{robot.namespace} reward {robot.reward} после награды за близость к цели")
+            robot.occupation_map = np.maximum(robot.occupation_map - 0.03, 0)
+            angle_bonus = 0.5 * (1 - abs(angle_diff)/math.pi)
+            robot.reward += angle_bonus
+            # robot.reward = self.reward_filter(robot.reward)
+            robot.reward *= 0.0005
             rewards.append(robot.reward)
             dones.append(robot.done)
 
@@ -757,61 +806,103 @@ class TurtleBotEnv(Node, gym.Env):
     
     def reset(self):
         states = []
-        spawn_points = [[-0.7, 0.05], [-2.5, 0.05]]
+        spawn_points = [[2.0, -5.0], [2.0, -2.0]]
+
+
         for i, robot in enumerate(self.robots):
-            cur_x, cur_y = spawn_points[i]
             cmd_msg = Twist()
             cmd_msg.linear.x = 0.0  
             cmd_msg.angular.z = 0.0
             robot.cmd_vel_pub.publish(cmd_msg)  
             rclpy.spin_once(self, timeout_sec=0.1) 
         client = self.create_client(Empty, '/reset_world')
-        request = Empty.Request()
 
         if client.wait_for_service(timeout_sec=1.0):
-            future = client.call_async(request)
-            while not future.done():
-                rclpy.spin_once(self, timeout_sec=0.1)
+            try:
+                req = self.reset_world.call_async(Empty.Request())
+                while not req.done():
+                    rclpy.spin_once(self, timeout_sec=0.1)
+            except:
+                import traceback
+                traceback.print_exc()
         else:
-            self.get_logger().warn('Gazebo reset service not available!')
-        timeout_counter = 0
-        while (abs(self.robots[0].current_x) < 0.01 and abs(self.robots[0].current_y) < 0.01 and 
-            abs(self.robots[0].current_yaw) < 1e-3 and timeout_counter < 50) and (abs(self.robots[1].current_x) < 0.01
-                                                                                   and abs(self.robots[1].current_y) < 0.01 and 
-            abs(self.robots[1].current_yaw) < 1e-3 and timeout_counter < 50):
-            rclpy.spin_once(self, timeout_sec=0.1)
-            timeout_counter += 1
+            self.get_logger().info('reset : service not available, waiting again...')
 
-        for robot in self.robots:
-            robot.current_x = cur_x
-            robot.current_y = cur_y
-            robot.current_yaw = 0.0
+        print('env reseted')
+
+        for i, robot in enumerate(self.robots):
+            set_robot_state = EntityState()
+            set_robot_state.name = f"tb{i}"
+            set_robot_state.pose.position.x = spawn_points[i][0]
+            set_robot_state.pose.position.y = spawn_points[i][1]
+            set_robot_state.pose.position.z = 0.1
+
+            robot_state = SetEntityState.Request()
+            robot_state._state = set_robot_state
+            set_state = self.create_client(SetEntityState, "/gazebo/set_entity_state")
+            if set_state.wait_for_service(timeout_sec=1.0):
+                try:
+                    req = set_state.call_async(robot_state)
+                    while not req.done():
+                        rclpy.spin_once(self, timeout_sec=0.1)
+                except rclpy.ServiceException as e:
+                    print("/gazebo/reset_simulation service call failed")
+            else:
+                self.get_logger().info('reset : service not available, waiting again...')
+            timeout_counter = 0
+            while (abs(robot.current_x) < 0.01 and abs(robot.current_y) < 0.01 and 
+                abs(robot.current_yaw) < 1e-3 and timeout_counter < 50):
+                rclpy.spin_once(self, timeout_sec=0.1)
+                timeout_counter += 1
+
+        for i, robot in enumerate(self.robots):
             robot.steps = 0
             robot.obstacle_count = 0
-            robot.prev_distance = None
+            robot.current_x = spawn_points[i][0]
+            robot.current_y = spawn_points[i][1]
+            robot.prev_x = None
+            robot.prev_y = None
+            robot.current_yaw = 0.0
+            robot.done = False
             robot.obstacles = []
             robot.camera_obstacle_detected = False
-            robot.done = False
+            robot.lidar_obstacle_detected = False
+            robot.reward = 0
+            robot.last_waypoint_idx = 0
+            robot.occupation_map = np.zeros_like(self.grid_map, dtype=np.float32)
+            state = self._get_initial_state(robot)
+            states.append(state)
 
-            x, y = world_to_map(
-                (robot.current_x, robot.current_y),
-                resolution=0.05,
-                origin=(-7.76, -7.15),
-                map_offset=(0, 0),
-                map_shape=self.grid_map.shape
-            )
-            angle_to_goal = math.atan2(robot.target_y - robot.current_y, robot.target_x - robot.current_x)
-            angle_diff = (angle_to_goal - robot.current_yaw + np.pi) % (2 * np.pi) - np.pi
-            min_obstacle_dist = 3.5 if not robot.obstacles else min(robot.obstacles)
-            dynamic_cost = self.occupation_map[y][x]
-            penalty = self.penalty_map[y][x]
-
-            distance = math.sqrt((robot.target_x - robot.current_x) ** 2 + (robot.target_y - robot.current_y) ** 2)
-                
-            state = np.array([robot.current_x, robot.current_y, angle_diff, min_obstacle_dist, 2*(dynamic_cost + penalty), distance])
-            robot.state = self.state_filter(state)
-            states.append(robot.state)
         return np.array(states)
+
+    def _get_initial_state(self, robot):
+        for _ in range(10):
+            rclpy.spin_once(self, timeout_sec=0.1)
+        
+        x, y = world_to_map(
+            (robot.current_x, robot.current_y),
+            resolution=0.05,
+            origin=(-7.76, -7.15),
+            map_offset=(0, 0),
+            map_shape=self.grid_map.shape
+        )
+        other = self.robots[1] if robot.namespace == 'tb0' else self.robots[0]
+        dynamic_cost = other.occupation_map[y][x]
+        penalty = self.penalty_map[y][x]
+        min_obstacle_dist = 3.5 if not robot.obstacles else min(robot.obstacles)
+        angle_to_goal = math.atan2(robot.target_y - robot.current_y, robot.target_x - robot.current_x)
+        angle_diff = (angle_to_goal - robot.current_yaw + np.pi) % (2 * np.pi) - np.pi
+        distance = math.sqrt((robot.target_x - robot.current_x) ** 2 + (robot.target_y - robot.current_y) ** 2)
+
+        robot.state = np.array([
+            robot.current_x,
+            robot.current_y,
+            angle_diff,
+            min_obstacle_dist,  
+            2*(dynamic_cost+penalty),  
+            distance,
+        ])
+        return robot.state
     
     def visualize_path(self, robot, path):
         path_marker = Marker()
@@ -842,9 +933,7 @@ class TurtleBotEnv(Node, gym.Env):
 
     def publish_costmaps(self):
         pass
-        # self.publish_grid_map()
-        # self.publish_occupation_map()
-        # self.publish_penalty_map()
+
 
     def publish_grid_map(self):
         if self.grid_map is None:
@@ -862,30 +951,24 @@ class TurtleBotEnv(Node, gym.Env):
         for i in range(0,self.grid_map.shape[0]):
             for j in range(0,self.grid_map.shape[1]):
                 msg.data.append(int(self.grid_map[i][j] * 100))
-        # msg.data = [int(val) for val in self.grid_map.flatten()]
 
         self.gridmap_pub.publish(msg)
 
-    def publish_occupation_map(self):
+    def publish_occupation_map(self, robot):
+        map_a_msg_pose = Pose()
+        map_a_msg_pose.position.x = -7.76
+        map_a_msg_pose.position.y = -7.15
+        map_a_msg_pose.position.z = 0.0
         msg = OccupancyGrid()
         msg.header = Header(stamp=self.get_clock().now().to_msg(), frame_id="map")
-        
-        occupation_data = np.clip(self.occupation_map * 10, 0, 100).astype(np.int8)
-        
-        msg.info = self.gridmap_pub.info
-        msg.data = occupation_data.flatten().tolist()
-        self.occupation_pub.publish(msg)
+        msg.info = MapMetaData(width=self.grid_map.shape[1], height=self.grid_map.shape[0], resolution=0.05, map_load_time= self.get_clock().now().to_msg(), origin=map_a_msg_pose)
 
-    def publish_penalty_map(self):
-        msg = OccupancyGrid()
-        msg.header = Header(stamp=self.get_clock().now().to_msg(), frame_id="map")
         
-        penalty_data = np.clip(self.penalty_map * 20, 0, 100).astype(np.int8)
-        
-        msg.info = self.gridmap_pub.info
-        msg.data = penalty_data.flatten().tolist()
-        self.penalty_pub.publish(msg)
-
+        occupation_data = np.clip(robot.occupation_map * 10, 0, 100).astype(np.int8)
+        for i in range(0,self.grid_map.shape[0]):
+            for j in range(0,self.grid_map.shape[1]):
+                msg.data.append(occupation_data[i][j])
+        robot.occupation_pub.publish(msg)
 
     def render(self, mode='human'):
         pass

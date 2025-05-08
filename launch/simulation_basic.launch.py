@@ -106,8 +106,7 @@ def generate_launch_description():
     ld.add_action(rviz_node)
 
 
-# test.yaml
-    spawn_points = [(-0.7, 0.05), (-2.5, 0.05)]
+    spawn_points = [(2.0, -5.0), (2.0, -2.0)]
     last_action = None
     remappings = [("/tf", "tf"), ("/tf_static", "tf_static")]
 

@@ -1,3 +1,3 @@
-*/.txt
-theta_star/training_logs.txt
-theta_star/models/training_logs.txt
+*/*.txt
+theta_star/logs/*
+theta_star/__pycache__/*

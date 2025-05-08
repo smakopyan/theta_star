@@ -26,8 +26,9 @@ class PPOAgent:
         self.env = env
         self.num_robots = env.num_robots
         self.state_dim = env.observation_space.shape[0]
-        self.state_dims = [env.observation_space.shape[0], env.observation_space.shape[0]]
 
+        self.state_dims = [env.observation_space.shape[0], env.observation_space.shape[0]]
+        self.action_dim = env.action_space.shape[0]  
         self.action_dims = [env.action_space.shape[0], env.action_space.shape[0]]
         self.grid_map = env.grid_map
         self.reward_filter = Zfilter(prev_filter=None, shape=(), center = False, \
@@ -180,7 +181,7 @@ class PPOAgent:
 
         actor_grads = tape.gradient(actor_loss_full, self.actors[agent_ind].trainable_variables)
         # actor_grads = [tf.clip_by_norm(g, 0.5) for g in actor_grads]
-
+    
         self.actor_optimizers[agent_ind].apply_gradients(zip(actor_grads, self.actors[agent_ind].trainable_variables))
         # === Critic update ===
         with tf.GradientTape() as tape:

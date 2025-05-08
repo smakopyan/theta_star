@@ -45,8 +45,8 @@ class ImprovedActor(tf.keras.Model):
         self.rb1 = ResBlock(state_dim, state_dim, n_neurons)
         self.rb2 = ResBlock(state_dim + state_dim, state_dim + state_dim, n_neurons)
 
-        self.action_low  = tf.constant([0.05, -1.82], dtype=tf.float32)
-        self.action_high = tf.constant([0.26,  1.82], dtype=tf.float32)
+        self.action_low  = tf.constant([0.05, -0.82], dtype=tf.float32)
+        self.action_high = tf.constant([0.26,  0.82], dtype=tf.float32)
         self.dropout = layers.Dropout(rate=0.1)
         self.mu_layer = layers.Dense(action_dim, activation='tanh')  # Ограничим действия в диапазоне [-1, 1]
         self.log_std_layer = layers.Dense(
