@@ -54,6 +54,7 @@ class PPOAgent:
         self.gaelam = 0.95
         self.min_entropy = 0.0001
         self.max_entropy = 0.01
+
         # self.alpha = 0.1
 
         self.actors = [
@@ -174,9 +175,9 @@ class PPOAgent:
             actor_loss = -tf.reduce_mean(tf.minimum(surrogate1, surrogate2))
             # print(actor_loss)
             entropy_bonus = tf.reduce_mean(entropy)
-            actor_loss_full = actor_loss 
+            # actor_loss_full = actor_loss 
 
-            # actor_loss_full = actor_loss - entropy_coef * entropy_bonus
+            actor_loss_full = actor_loss - entropy_coef * entropy_bonus
 
         actor_grads = tape.gradient(actor_loss_full, self.actors[agent_ind].trainable_variables)
         # actor_grads = [tf.clip_by_norm(g, 0.5) for g in actor_grads]
@@ -195,7 +196,11 @@ class PPOAgent:
           # Добавляем логирование метрик
         with self.summary_writers[agent_ind].as_default():
             summary.scalar('Actor Loss', actor_loss.numpy(), step=self.global_step)
+            for idx, grad in enumerate(actor_grads):
+                summary.histogram(f'Actor_Gradients/Layer_{idx}', grad, step=self.global_step)
             summary.scalar('Critic Loss', critic_loss.numpy(), step=self.global_step)
+            for idx, grad in enumerate(critic_grads):
+                summary.histogram(f'Critic_Gradients/Layer_{idx}', grad, step=self.global_step)
             summary.scalar('Entropy', tf.reduce_mean(entropy).numpy(), step=self.global_step)
             summary.scalar('Learning Rate', self.actor_optimizers[agent_ind].learning_rate.numpy(), step=self.global_step)
             summary.histogram('Actions', actions, step=self.global_step)
@@ -215,10 +220,10 @@ class PPOAgent:
         episodes_x, avg_y = [], []
         window = 5
         for episode in range(max_episodes):
-            if episode > 200:
-                batch_size = 64
-            if episode > 400:
-                batch_size = 128
+            # if episode > 200:
+            #     batch_size = 64
+            # if episode > 400:
+            #     batch_size = 128
             self.env.occupation_map = np.zeros_like(self.env.grid_map, dtype=np.float32)
             self.env.penalty_map = np.ones_like(self.env.grid_map, dtype=np.float32)
             print('----------------------------------------------------------------------------')
@@ -288,6 +293,7 @@ class PPOAgent:
                     [batch_data[i]['dones'] for i in range(self.num_robots)]
                 )
                 entropy_coef = self.update_entropy_coef(episode, max_episodes)
+                # entropy_coef = 0.1
 
                 for i in range(self.num_robots):
                     batch_data[i]['advantages'] = advantages[i]
@@ -378,7 +384,7 @@ def main(args=None):
 
     finally: 
         rclpy.shutdown()
-        shutdown_handler(None, None)
+        # shutdown_handler(None, None)
 
 if __name__ == '__main__':
     main()

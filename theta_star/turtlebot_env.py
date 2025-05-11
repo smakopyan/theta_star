@@ -728,7 +728,7 @@ class TurtleBotEnv(Node, gym.Env):
             if obstacle_detected:
                 robot.obstacle_count += 1
                 # print(f"{robot.namespace} reward до {robot.reward} обнаружения препятствия")
-                robot.reward -= 50  
+                robot.reward -= 20  
                 # print(f"{robot.namespace} reward после {robot.reward} обнаружения препятствия")
                 if robot.obstacle_count >= 100:
                     robot.done = True
@@ -751,14 +751,14 @@ class TurtleBotEnv(Node, gym.Env):
             other = self.robots[1] if robot.namespace == 'tb0' else self.robots[0]
             if distance < 0.3:
                 print('GOAL REACHED!!!!')
-                robot.reward += 600
+                robot.reward += 300
                 robot.done = True
             if distance > 10:
                 robot.reward -= 100
                 robot.done = True 
             if robot.steps >= robot.max_steps:
             # if robot.steps >= 5:
-                robot.reward -= 100
+                robot.reward -= 50
                 robot.done = True
                 for robot in self.robots:
                     robot.steps = 0
@@ -785,10 +785,10 @@ class TurtleBotEnv(Node, gym.Env):
             prev_distance = math.sqrt((robot.target_x - robot.prev_x)**2 + (robot.target_y - robot.prev_y)**2)
             current_distance = math.sqrt((robot.target_x - robot.current_x)**2 + (robot.target_y - robot.current_y)**2)
             # print(f"{robot.namespace} reward {robot.reward} до награды за близость к цели")
-            distance_reward = (prev_distance - current_distance) * 0.05 if (prev_distance - current_distance) > 0 else (prev_distance - current_distance) * 0.05
+            distance_reward = (prev_distance - current_distance) * 0.05 if (prev_distance - current_distance) > 0 else (prev_distance - current_distance) * 0.04
             # print(f"{robot.namespace} reward distance_reward {distance_reward} ")
             if distance != 0:
-                goal_distance_reward = (1 / distance + 1e-5) * 8 if distance <= 2. else -(1 / distance + 1e-5) * 8
+                goal_distance_reward =( 1 / (distance + 1e-5) )* 10 if distance <= 2. else -(1 / (distance + 1e-5) )* 8
             # print(f"{robot.namespace} reward goal_distance_reward {goal_distance_reward} ")
 
                 robot.reward += distance_reward + goal_distance_reward

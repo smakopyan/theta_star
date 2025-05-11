@@ -113,7 +113,7 @@ class ImprovedActor(tf.keras.Model):
     def from_config(cls, config):
         print("ЗАГРУЖАЕМ CONFIG:", config)  # Отладка
         return cls(
-            state_dim=config.get("state_dim", 4),  
+            state_dim=config.get("state_dim", 8),  
             action_dim=config.get("action_dim", 2),  
             n_neurons=config.get("n_neurons", 512),
             # dtype=config.get("dtype", "float32")
