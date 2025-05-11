@@ -189,8 +189,7 @@ class PPOAgent:
         return np.clip(entropy_coef, self.min_entropy, self.max_entropy)
     
     def save_models(self):
-        for i in range(self.num_robots):
-            self.actor.save(f'ppo_actor.keras')
+        self.actor.save(f'ppo_actor.keras')
         print("\nModels saved successfully!")
 
     def train(self, max_episodes=500, batch_size=32, num_robots=2):
@@ -221,12 +220,12 @@ class PPOAgent:
             step = 0
             cmbd_states = []
             while not done:
-                combined_states = []
+                states_with_id = []
                 for i in range(self.num_robots):
                     agent_id = np.eye(self.num_robots)[i]
-                    combined_state = np.concatenate([states[i], agent_id], axis=-1)
-                    combined_states.append(combined_state)
-                new_states = combined_states
+                    state_with_id = np.concatenate([states[i], agent_id], axis=-1)
+                    states_with_id.append(state_with_id)
+                new_states = states_with_id
 
 
                 actions, log_probs, _,_, raw_actions = self.get_action(new_states)
@@ -240,20 +239,19 @@ class PPOAgent:
                 if np.isnan(next_states).any():
                     print("Обнаружен NaN в состоянии!")
                     break
-                next_combined_states = []
+                next_states_with_id = []
                 for i in range(self.num_robots):
                     agent_id = np.eye(self.num_robots)[i]
-                    combined_state = np.concatenate([next_states[i], agent_id], axis=-1)
-                    next_combined_states.append(combined_state)
+                    next_state_with_id = np.concatenate([next_states[i], agent_id], axis=-1)
+                    next_states_with_id.append(next_state_with_id)
                 
-                # next_combined_states = [np.reshape(next_state, [1, self.state_dim])for next_state in next_combined_states]
-                next_combined_states = [np.asarray(next_state).reshape(-1) for next_state in next_combined_states]
+                next_states_with_id = [np.asarray(next_state).reshape(-1) for next_state in next_states_with_id]
 
                 # next_states = [np.reshape(next_state, [1, self.state_dim-2])for next_state in next_states]
                 next_states = [np.asarray(next_state).reshape(-1) for next_state in next_states]
 
                 
-                values_learned = [float(self.critic.call(state)[0, 0].numpy()) for i, state in enumerate(next_combined_states)]
+                values_learned = [float(self.critic.call(state)[0, 0].numpy()) for i, state in enumerate(next_states_with_id)]
 
                 for i in range(self.num_robots):
                     batch_data[i]['states'].append(states[i])
@@ -268,12 +266,12 @@ class PPOAgent:
                     done = any(dones) or (step >= self.env.max_steps)
                 
                 states = next_states
-                cmbd_states.append(next_combined_states)
+                cmbd_states.append(next_states_with_id)
                 step += 1
 
             if done or step % batch_size == 0:
                 for i in range(self.num_robots):
-                    next_values_learned = float(self.critic.call(next_combined_states[i])[0, 0].numpy()) 
+                    next_values_learned = float(self.critic.call(next_states_with_id[i])[0, 0].numpy()) 
                     batch_data[i]['values_learned'].append(next_values_learned)
                     
                 advantages, returns = self.compute_advantages(

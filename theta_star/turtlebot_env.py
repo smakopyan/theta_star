@@ -338,7 +338,7 @@ class TurtleBotEnv(Node, gym.Env):
         self.observation_space = spaces.Box(
             low=np.array([-1.0, -1.0, -1.0, 0.0, 0.0, 0.0]),  
             high=np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0]),
-            shape=(6,),  
+            shape=(7,),  
             dtype=np.float32
         )                       
 
@@ -398,7 +398,8 @@ class TurtleBotEnv(Node, gym.Env):
                 map_shape=self.grid_map.shape
             )
             other = self.robots[1] if robot.namespace == 'tb0' else self.robots[0]
-            
+            robots_dist = math.sqrt((other.current_x - robot.current_x)**2 + (other.current_y - robot.current_y)**2)
+
             dynamic_cost = other.occupation_map[y][x]
             penalty = self.penalty_map[y][x]
             distance = math.sqrt((robot.target_x - robot.current_x) ** 2 + (robot.target_y - robot.current_y) ** 2)
@@ -406,7 +407,7 @@ class TurtleBotEnv(Node, gym.Env):
             angle_diff = (angle_to_goal - robot.current_yaw + np.pi) % (2 * np.pi) - np.pi
             min_obstacle_dist = 3.5 if not robot.obstacles else min(robot.obstacles)
 
-            obs = np.array([robot.current_x, robot.current_y, angle_diff, min_obstacle_dist, 2*(dynamic_cost + penalty), distance])
+            obs = np.array([robot.current_x, robot.current_y, angle_diff, min_obstacle_dist, 2*(dynamic_cost + penalty), distance, robots_dist])
             # print(obs)
             observations.append(obs)
         return np.array(observations)
@@ -893,6 +894,7 @@ class TurtleBotEnv(Node, gym.Env):
         angle_to_goal = math.atan2(robot.target_y - robot.current_y, robot.target_x - robot.current_x)
         angle_diff = (angle_to_goal - robot.current_yaw + np.pi) % (2 * np.pi) - np.pi
         distance = math.sqrt((robot.target_x - robot.current_x) ** 2 + (robot.target_y - robot.current_y) ** 2)
+        robots_dist = math.sqrt((other.current_x - robot.current_x)**2 + (other.current_y - robot.current_y)**2)
 
         robot.state = np.array([
             robot.current_x,
@@ -901,6 +903,7 @@ class TurtleBotEnv(Node, gym.Env):
             min_obstacle_dist,  
             2*(dynamic_cost+penalty),  
             distance,
+            robots_dist
         ])
         return robot.state
     
