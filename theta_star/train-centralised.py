@@ -37,7 +37,7 @@ class PPOAgent:
         
         # Коэффициенты
         self.gamma = 0.99  # коэффициент дисконтирования
-        self.epsilon = 0.15 # параметр клиппинга
+        self.epsilon = 0.1 # параметр клиппинга
         self.actor_lr = 0.0003
         self.critic_lr = 0.0003
         self.gaelam = 0.95
@@ -122,7 +122,6 @@ class PPOAgent:
         all_states = np.vstack(np.asarray(states))
         all_actions = np.vstack([data["actions"] for data in batch_data.values()])
         all_log_probs_old = np.vstack([data["log_probs"] for data in batch_data.values()])
-        print(all_log_probs_old.shape)
 
         all_advantages = np.vstack([data["advantages"] for data in batch_data.values()])
         all_returns = np.vstack([data["returns"] for data in batch_data.values()])
