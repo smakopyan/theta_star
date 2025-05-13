@@ -801,8 +801,9 @@ class TurtleBotEnv(Node, gym.Env):
             # print(robot.reward)
             rewards.append(robot.reward)
             dones.append(robot.done)
+        observations = self.get_observations()
 
-        return self.get_observations(), rewards, dones, {}
+        return observations, rewards, dones, {}
     
     def reset(self):
         states = []
@@ -871,6 +872,7 @@ class TurtleBotEnv(Node, gym.Env):
             robot.last_waypoint_idx = 0
             robot.occupation_map = np.zeros_like(self.grid_map, dtype=np.float32)
             state = self._get_initial_state(robot)
+            # state = np.concatenate([state, [0.0, 0.0]], axis = -1)
             states.append(state)
 
         return np.array(states)

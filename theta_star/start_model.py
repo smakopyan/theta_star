@@ -5,7 +5,7 @@ from turtlebot_env import TurtleBotEnv, Zfilter
 from actor import ImprovedActor, ResBlock
 
 actor = keras.models.load_model(
-    'ppo_actor_best.keras',
+    'ppo_actor.keras',
     custom_objects={'ImprovedActor': ImprovedActor, 'ResBlock': ResBlock}
 )
 rclpy.init() 
@@ -26,17 +26,23 @@ for episode in range(num_episodes):
     steps = 0
 
     while not any(dones):
-        states = [state_filter(state) for state in states]
+        if len(states[1]) == env.observation_space.shape[0]:
+            states = [state_filter(state) for state in states]
+        else:
+            states = [state_filter(state[:-2]) for state in states]
+
         combined_states = []
+        if len(states[1]) == 7:
+            states = [np.concatenate([state, [0.0, 0.0]], axis = -1) for state in states]
+
         for i in range(num_robots):
             agent_id = np.eye(num_robots)[i]
             combined_state = np.concatenate([states[i], agent_id], axis=-1)
             combined_states.append(combined_state)
         states = combined_states
-
         actions = []
         for i in range(num_robots):
-            state = np.reshape(states[i], [1, env.observation_space.shape[0]+2])
+            state = np.reshape(states[i], [1, env.observation_space.shape[0]+num_robots*2])
             action_scaled, _, _, _, _ = actor(state)
             
             action = action_scaled.numpy()[0]
@@ -44,6 +50,7 @@ for episode in range(num_episodes):
 
 
         next_states, rewards, dones, info = env.step(actions)
+        next_states = [np.concatenate([state, action], axis = -1) for state, action in zip(next_states, actions)]
 
         # Convert dones to a list if it's a boolean
         if isinstance(dones, bool):

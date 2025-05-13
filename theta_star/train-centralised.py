@@ -25,8 +25,8 @@ class PPOAgent:
 
         self.obs_dim = env.observation_space.shape[0]  
         self.agent_id_dim = self.num_robots 
-        self.state_dim = self.obs_dim + self.agent_id_dim  
         self.action_dim = env.action_space.shape[0]
+        self.state_dim = self.obs_dim + self.agent_id_dim  + self.action_dim
         self.grid_map = env.grid_map
         # self.reward_filter = Zfilter(prev_filter=None, shape=(), center = False, clip=1.0)
 
@@ -188,7 +188,7 @@ class PPOAgent:
         return np.clip(entropy_coef, self.min_entropy, self.max_entropy)
     
     def save_models(self):
-        self.actor.save(f'ppo_actor.keras')
+        self.actor.save('ppo_actor_last.keras')
         print("\nModels saved successfully!")
 
     def train(self, max_episodes=500, batch_size=32, num_robots=2):
@@ -222,7 +222,10 @@ class PPOAgent:
                 states_with_id = []
                 for i in range(self.num_robots):
                     agent_id = np.eye(self.num_robots)[i]
-                    state_with_id = np.concatenate([states[i], agent_id], axis=-1)
+                    if len(states[i]) == 7:
+                        state_with_id = np.concatenate([states[i], [0.0, 0.0], agent_id], axis=-1)
+                    elif len(states[i]) == 9:
+                        state_with_id = np.concatenate([states[i], agent_id], axis=-1)
                     states_with_id.append(state_with_id)
                 new_states = states_with_id
 
@@ -232,10 +235,13 @@ class PPOAgent:
 
                 next_states = [self.state_filter(state) for state in next_states]
 
+                next_states = [np.concatenate([next_states[i], actions[i]], axis=-1) for i in range(len(actions))]
+
                 
                 # if isinstance(dones, bool):
                 #     dones = [dones] * self.num_robots
                 if np.isnan(next_states).any():
+                    self.save_models()
                     print("Обнаружен NaN в состоянии!")
                     break
                 next_states_with_id = []
