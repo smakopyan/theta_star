@@ -11,20 +11,20 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 def generate_launch_description():
     ld = LaunchDescription()
 
-    launch_file_dir = os.path.join(get_package_share_directory('turtlebot3_gazebo'), 'launch')
+    # launch_file_dir = os.path.join(get_package_share_directory('theta_star'), 'launch')
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
 
     TURTLEBOT3_MODEL = 'waffle'
     urdf_file_name = 'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf'
 
     urdf = os.path.join(
-            get_package_share_directory('turtlebot3_gazebo'),
+            get_package_share_directory('theta_star'),
             'urdf',
             'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf')
 
-    turtlebot3_gazebo_path = get_package_share_directory("turtlebot3_gazebo")
+    turtlebot3_gazebo_path = get_package_share_directory("theta_star")
 
-    model = os.path.join(turtlebot3_gazebo_path, "models", "turtlebot3_" + TURTLEBOT3_MODEL ,"model.sdf")
+    model = os.path.join(turtlebot3_gazebo_path, "models", "model.sdf")
     
     declare_world_name = DeclareLaunchArgument(
         'world',

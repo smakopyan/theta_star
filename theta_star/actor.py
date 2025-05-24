@@ -45,13 +45,13 @@ class ImprovedActor(tf.keras.Model):
         self.rb1 = ResBlock(state_dim, state_dim, n_neurons)
         self.rb2 = ResBlock(state_dim + state_dim, state_dim + state_dim, n_neurons)
 
-        self.action_low  = tf.constant([0.05, -0.82], dtype=tf.float32)
-        self.action_high = tf.constant([0.26,  0.82], dtype=tf.float32)
+        self.action_low  = tf.constant([0.05, -1.82], dtype=tf.float32)
+        self.action_high = tf.constant([0.26,  1.82], dtype=tf.float32)
         self.dropout = layers.Dropout(rate=0.1)
         self.mu_layer = layers.Dense(action_dim, activation='tanh')  # Ограничим действия в диапазоне [-1, 1]
         self.log_std_layer = layers.Dense(
             action_dim,
-            activation='softplus',
+            activation='tanh',
             kernel_initializer='he_uniform',
             bias_initializer=initializers.Constant(-1.0)
         )
@@ -71,7 +71,7 @@ class ImprovedActor(tf.keras.Model):
         mu = self.mu_layer(x)
         mu = tf.clip_by_value(mu, -1.0, 1.0)
 
-        log_std = self.log_std_layer(x)
+        log_std = self.log_std_layer(x) * 0.5
         std = tf.exp(log_std)
         std = tf.clip_by_value(std, 1e-6, 1.5) 
 
@@ -113,7 +113,7 @@ class ImprovedActor(tf.keras.Model):
     def from_config(cls, config):
         print("ЗАГРУЖАЕМ CONFIG:", config)  # Отладка
         return cls(
-            state_dim=config.get("state_dim", 8),  
+            state_dim=config.get("state_dim", 9),  
             action_dim=config.get("action_dim", 2),  
             n_neurons=config.get("n_neurons", 512),
             # dtype=config.get("dtype", "float32")

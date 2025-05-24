@@ -25,8 +25,8 @@ class PPOAgent:
 
         self.obs_dim = env.observation_space.shape[0]  
         self.agent_id_dim = self.num_robots 
-        self.state_dim = self.obs_dim + self.agent_id_dim  
         self.action_dim = env.action_space.shape[0]
+        self.state_dim = self.obs_dim + self.agent_id_dim
         self.grid_map = env.grid_map
         # self.reward_filter = Zfilter(prev_filter=None, shape=(), center = False, clip=1.0)
 
@@ -37,7 +37,7 @@ class PPOAgent:
         
         # Коэффициенты
         self.gamma = 0.99  # коэффициент дисконтирования
-        self.epsilon = 0.15 # параметр клиппинга
+        self.epsilon = 0.1 # параметр клиппинга
         self.actor_lr = 0.0003
         self.critic_lr = 0.0003
         self.gaelam = 0.95
@@ -122,7 +122,6 @@ class PPOAgent:
         all_states = np.vstack(np.asarray(states))
         all_actions = np.vstack([data["actions"] for data in batch_data.values()])
         all_log_probs_old = np.vstack([data["log_probs"] for data in batch_data.values()])
-        print(all_log_probs_old.shape)
 
         all_advantages = np.vstack([data["advantages"] for data in batch_data.values()])
         all_returns = np.vstack([data["returns"] for data in batch_data.values()])
@@ -189,7 +188,7 @@ class PPOAgent:
         return np.clip(entropy_coef, self.min_entropy, self.max_entropy)
     
     def save_models(self):
-        self.actor.save(f'ppo_actor.keras')
+        self.actor.save('ppo_actor_last.keras')
         print("\nModels saved successfully!")
 
     def train(self, max_episodes=500, batch_size=32, num_robots=2):
@@ -202,7 +201,6 @@ class PPOAgent:
             print('-------------------------------------------------------------')
 
             states = self.env.reset()
-            states = [self.state_filter(state) for state in states]
 
             episode_rewards = [0] * num_robots
             done = False
@@ -221,6 +219,9 @@ class PPOAgent:
             cmbd_states = []
             while not done:
                 states_with_id = []
+                if len(states[0]) == self.env.observation_space.shape[0]:
+                #     states = [np.concatenate([state, [0.0, 0.0]], axis=-1) for state in states]
+                    states = [self.state_filter(state) for state in states]
                 for i in range(self.num_robots):
                     agent_id = np.eye(self.num_robots)[i]
                     state_with_id = np.concatenate([states[i], agent_id], axis=-1)
@@ -231,12 +232,15 @@ class PPOAgent:
                 actions, log_probs, _,_, raw_actions = self.get_action(new_states)
                 next_states, rewards, dones, _ = self.env.step(actions)
 
+
+                # next_states = [np.concatenate([next_states[i], actions[::-1][i]], axis=-1) for i in range(len(actions))]
                 next_states = [self.state_filter(state) for state in next_states]
 
                 
                 # if isinstance(dones, bool):
                 #     dones = [dones] * self.num_robots
                 if np.isnan(next_states).any():
+                    self.save_models()
                     print("Обнаружен NaN в состоянии!")
                     break
                 next_states_with_id = []
@@ -292,8 +296,10 @@ class PPOAgent:
                     cmbd_states
                     )
                 avg_reward = np.mean(episode_rewards)
+                if episode == 0:
+                    self.best_model = avg_reward
 
-                if avg_reward > self.best_model:
+                elif avg_reward > self.best_model:
                     print(f"prev reward: {self.best_model}, new reward {avg_reward}")
                     self.actor.save(f'ppo_actor_best.keras')
                     print(' ...saving model... ')
@@ -301,8 +307,8 @@ class PPOAgent:
 
 
 
-                for i in range(self.num_robots):
-                    batch_data[i] = {k: [] for k in batch_data[i]}
+                # for i in range(self.num_robots):
+                #     batch_data[i] = {k: [] for k in batch_data[i]}
 
                 if done:
                     step = 0

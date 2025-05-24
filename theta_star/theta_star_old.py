@@ -18,7 +18,7 @@ class Node:
 class ThetaStar:
     def heuristic(self, a, b):
         return np.linalg.norm(np.array(a) - np.array(b))
-    
+
     def plan(self, start, end, grid, occupations, penalties):
         start_node = Node(None, start)
         end_node = Node(None, end)
@@ -54,7 +54,7 @@ class ThetaStar:
                     continue
                 if grid[node_position[0]][node_position[1]] == 1:
                     continue
-                if current_node.parent and self.line_of_sight(current_node.parent.position, node_position, grid, occupations):
+                if current_node.parent and self.line_of_sight(current_node.parent.position, node_position, grid):
                     new_g = current_node.parent.g + self.heuristic(current_node.parent.position, node_position)
                     tentative_node = Node(current_node.parent, node_position)
                 else:
@@ -63,8 +63,11 @@ class ThetaStar:
 
                 base_cost = 1.0
                 dynamic_cost = occupations[node_position[0]][node_position[1]]
-                penalty = 1
+                penalty = penalties[node_position[0]][node_position[1]]
                 new_g += base_cost + 2 * dynamic_cost * penalty
+                # if dynamic_cost > 0:
+                #     print("new_g += base_cost + 2 * dynamic_cost * penalty")
+                #     print(f"{new_g} += {base_cost} + 2* {dynamic_cost} * {penalty}")
 
                 if node_position in closed_list:
                     existing_node = closed_list[node_position]
@@ -80,8 +83,8 @@ class ThetaStar:
                 closed_list[tentative_node.position] = tentative_node
 
         return None
-    
-    def line_of_sight(self, start, end, grid, occupations):
+
+    def line_of_sight(self, start, end, grid):
         x0, y0 = start
         x1, y1 = end
         
@@ -97,7 +100,7 @@ class ThetaStar:
         err = dx - dy
 
         while True:
-            if grid[x0][y0] == 1 or occupations[x0][y0] != 0.0:
+            if grid[x0][y0] == 1:
                 return False
                 
             if x0 == x1 and y0 == y1:
