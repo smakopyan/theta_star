@@ -29,13 +29,13 @@ def generate_launch_description():
     declare_world_name = DeclareLaunchArgument(
         'world',
         default_value='world3.sdf',  
-        choices=['world1.sdf', 'world2.sdf', 'world3.sdf', 'world4.sdf', 'turtlebot3_world.world', 'test.sdf', 'test1.sdf']
+        choices=['world1.sdf', 'world2.sdf', 'world3.sdf', 'world4.sdf', 'turtlebot3_world.sdf', 'turtlebot3_world.world', 'test.sdf', 'test1.sdf', 'maze.sdf']
     )
     
     declare_map_name = DeclareLaunchArgument(
         'map',
         default_value='map3.yaml',
-        choices=['map1.yaml', 'map2.yaml', 'map3.yaml', 'map4.yaml', 'turtlebot3_map.yaml', 'map_test.yaml', 'test.yaml', 'test1.yaml']
+        choices=['map1.yaml', 'map2.yaml', 'map3.yaml', 'map4.yaml', 'turtlebot3_map.yaml', 'map_test.yaml', 'test.yaml', 'test1.yaml', 'maze.yaml']
     )
         
     world_path = PathJoinSubstitution([
@@ -105,8 +105,19 @@ def generate_launch_description():
     ld.add_action(map_server_lifecyle)
     ld.add_action(rviz_node)
 
+    # map3
+    # spawn_points = [(2.0, -5.0), (2.0, -2.0)]
+    
+    # test1
+    # spawn_points = [(-2.3, 0.4), (2.4, 0.4)]
 
-    spawn_points = [(2.0, -5.0), (2.0, -2.0)]
+    # test
+    spawn_points = [(-0.7, 0.8), (-0.7, -1.5)]
+
+    # maze
+    # spawn_points = [(-1.2, 1.1), (0.1, -1.6)]
+
+
     last_action = None
     remappings = [("/tf", "tf"), ("/tf_static", "tf_static")]
 

@@ -5,21 +5,27 @@ from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
 
 def generate_launch_description():
     TURTLEBOT3_MODEL = 'waffle'
-    launch_file_dir = os.path.join(get_package_share_directory('turtlebot3_gazebo'), 'launch')
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
+    turtlebot3_gazebo_path = get_package_share_directory("theta_star")
 
+    model = os.path.join(turtlebot3_gazebo_path, "models", "model.sdf")
+    urdf = os.path.join(
+            get_package_share_directory('theta_star'),
+            'urdf',
+            'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf')
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    x_pose = LaunchConfiguration('x_pose', default='-2.0')
-    y_pose = LaunchConfiguration('y_pose', default='-0.5')
+    x_pose = LaunchConfiguration('x_pose', default='0.0')
+    y_pose = LaunchConfiguration('y_pose', default='0.0')
 
     world = os.path.join(
         get_package_share_directory('theta_star'),
         'worlds',
-        'test.sdf'
+        'maze.sdf'
     )
 
     gzserver_cmd = IncludeLaunchDescription(
@@ -35,23 +41,34 @@ def generate_launch_description():
         )
     )
 
-    robot_state_publisher_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(launch_file_dir, 'robot_state_publisher.launch.py')
-        ),
-        launch_arguments={'use_sim_time': use_sim_time}.items()
-    )
+    robot_state_publisher_cmd = Node(
+            package="robot_state_publisher",
+            executable="robot_state_publisher",
+            output="screen",
+            parameters=[{
+                "use_sim_time": True,
+                "publish_frequency": 10.0}],
+            arguments=[urdf],
+        )
+    
 
-    spawn_turtlebot_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(launch_file_dir, 'spawn_turtlebot3.launch.py')
-        ),
-        launch_arguments={
-            'x_pose': x_pose,
-            'y_pose': y_pose
-        }.items()
-    )
-
+    spawn_turtlebot_cmd =        spawn_turtlebot3 = Node(
+            package="gazebo_ros",
+            executable="spawn_entity.py",
+            arguments=[
+                "-file",
+                model,
+                "-entity",
+                'tb',
+                "-x",
+                x_pose,
+                "-y",
+                y_pose,
+                "-z",
+                "0.01",
+            ],
+            output="screen",
+        )
     ld = LaunchDescription()
 
     # Add the commands to the launch description

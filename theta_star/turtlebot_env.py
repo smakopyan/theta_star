@@ -31,11 +31,12 @@ from gazebo_msgs.srv import SetEntityState
 from gazebo_msgs.msg import EntityState
 import time
 from scipy.ndimage import distance_transform_edt
+import yaml
 
 logging.basicConfig(filename='training_logs.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-def slam_to_grid_map(slam_map, threshold=200, expansion_size = 5, resolution = 0.05):
+def slam_to_grid_map(slam_map, threshold=200, expansion_size = 1, resolution = 0.05):
     grid_map = np.where(slam_map < threshold, 1, 0)  
     wall = np.where(grid_map == 1)
     for i in range(-expansion_size,expansion_size+1):
@@ -50,7 +51,7 @@ def slam_to_grid_map(slam_map, threshold=200, expansion_size = 5, resolution = 0
 
     return grid_map
     
-def grid_to_world(x_grid, y_grid, map_shape, map_resolution = 0.05, map_origin = (-7.76,-7.15), viz = False):
+def grid_to_world(x_grid, y_grid, map_shape, map_resolution = 0.05, map_origin = (-5.3, -4.99), viz = False):
 
     y_map = map_shape[0] - y_grid - 1
     x_map = x_grid
@@ -60,6 +61,7 @@ def grid_to_world(x_grid, y_grid, map_shape, map_resolution = 0.05, map_origin =
     else:
         y_w = map_origin[1] + y_map * map_resolution
     return x_w, y_w
+
 
 def world_to_map(world_coords, resolution, origin, map_offset, map_shape):
     """
@@ -80,11 +82,11 @@ def world_to_map(world_coords, resolution, origin, map_offset, map_shape):
 
     # Обработка массивов и одиночных значений
     if isinstance(x_world, np.ndarray):
-        x_map = ((x_world - origin[0]) / resolution).astype(int) 
-        y_map = ((y_world - origin[1]) / resolution).astype(int) 
+        x_map = ((x_world - origin[0]) / resolution).astype(int) + map_offset[0]
+        y_map = ((y_world - origin[1]) / resolution).astype(int) + map_offset[1]
     else:
-        x_map = int((x_world - origin[0]) / resolution) 
-        y_map = int((y_world - origin[1]) / resolution) 
+        x_map = int((x_world - origin[0]) / resolution) + map_offset[0]
+        y_map = int((y_world - origin[1]) / resolution) + map_offset[1]
 
     # Переворачиваем Y, если SLAM-карта инвертирована
     if isinstance(y_map, np.ndarray):
@@ -177,6 +179,8 @@ class Robot():
         self.camera_obstacle_detected = False
         self.lidar_obstacle_detected = False
         self.path_marker_pub = None
+        self.traj_marker_pub = None
+
         self.wp_marker_pub = None
 
         
@@ -221,6 +225,9 @@ class Robot():
         self.nearest_wp = None
         self.world_path = None
         self.done = False
+        self.trajectory = [] 
+        self.init_path = None
+
 
 class RunningStat(object):
     def __init__(self,shape):
@@ -290,17 +297,60 @@ class TurtleBotEnv(Node, gym.Env):
     def __init__(self):
         super().__init__('turtlebot_env')
         self.num_robots = 2
-        spawn_points = [[2.0, -5.0], [2.0, -2.0]]
-        # goals = [[0.483287, -2.73528],[0.583933, -3.66662] ]
-        goals = [[3.0, -2.0], [3.0, -5.0]]
-
-
-        slam_map = cv2.imread(os.path.join(get_package_share_directory('theta_star'),
-                                           'maps','map3.pgm'), cv2.IMREAD_GRAYSCALE)
+        # map3
+        # self.spawn_points = [[2.0, -5.0], [2.0, -2.0]]
         
+        # test1
+        # self.spawn_points = [[-2.3, 0.4], [2.4, 0.4]]
+
+        # test
+        self.spawn_points = [[-0.7, 0.8], [-0.7, -1.5]]
+        
+        # maze
+        # self.spawn_points = [[-1.2, 1.1], [0.1, -1.6]]
+
+
+
+        # map3
+        # goals = [[3.0, -2.0], [3.0, -5.0]]
+
+        # test1
+        # goals = [[1.0, 1.4], [0.0, -0.85]]
+
+        # test
+        goals = [[1.7, 0.0], [4.0, -4.7]]
+
+        # maze
+        # goals = [[-0.2, 0.3], [-1.4, -.2]]
+
+
+        self.map_name = 'test'
+        self.map_filename = 'test.yaml'
+        map_yaml_path = os.path.join(
+            get_package_share_directory('theta_star'),
+            'maps',
+            self.map_filename
+        )
+        
+        with open(map_yaml_path, 'r') as f:
+            map_data = yaml.safe_load(f)
+        
+        map_image = map_data['image']
+        self.map_resolution = map_data['resolution']
+        self.map_origin = tuple(map_data['origin'][:2])  # Берем только x, y
+        map_file = os.path.join(
+            get_package_share_directory('theta_star'),
+            'maps',
+            map_image
+        )
+        
+
+
+        slam_map = cv2.imread(map_file, cv2.IMREAD_GRAYSCALE)
+
   
         self.grid_map = slam_to_grid_map(slam_map)
-        self.robots = [Robot(f"tb{i}", spawn_points[i], goals[i], self.grid_map) for i in range(self.num_robots)]
+        self.robots = [Robot(f"tb{i}", self.spawn_points[i], goals[i], self.grid_map) for i in range(self.num_robots)]
 
         self.map_initialized = False
         self.penalty_map = np.ones_like(self.grid_map, dtype=np.float32)
@@ -308,6 +358,7 @@ class TurtleBotEnv(Node, gym.Env):
         self.reset_world = self.create_client(Empty, '/reset_world')
         self.set_state = self.create_client(SetEntityState, "/gazebo/set_entity_state")
         self.step_ = 0
+        self.episode_counter = 0
         qos_profile = QoSProfile(
             depth=5,
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
@@ -323,6 +374,11 @@ class TurtleBotEnv(Node, gym.Env):
             robot.path_marker_pub = self.create_publisher(
                 Marker, 
                 f'/{robot.namespace}/path_marker', 
+                10
+            )
+            robot.traj_marker_pub = self.create_publisher(
+                Marker, 
+                f'/{robot.namespace}/traj_marker', 
                 10
             )
             robot.wp_marker_pub = self.create_publisher(
@@ -356,7 +412,7 @@ class TurtleBotEnv(Node, gym.Env):
             # robot.optimal_path = optimal_path_
             robot.optimal_path = self.interpolate_path(optimal_path_)
             # print(robot.optimal_path)
-            robot.potential_field = generate_potential_field(self.grid_map, world_to_map(robot.goal, 0.05, (-7.76,-7.15), (0, 0), self.grid_map.shape), robot.optimal_path)
+            robot.potential_field = generate_potential_field(self.grid_map, self.world_to_map(robot.goal, 0.05, self.grid_map.shape), robot.optimal_path)
             # self.show_potential_field(robot) 
             self.goal_reach_bonus = 15.0  
             self.inactivity_penalty = -0.5 
@@ -376,12 +432,29 @@ class TurtleBotEnv(Node, gym.Env):
         self.timer = self.create_timer(0.05, self._timer_callback)
         self.costmap_timer = self.create_timer(1.0, self.publish_costmaps)
 
-    
-    def path(self, robot, grid_map, occupation_map, penalty_map,  map_resolution = 0.05, map_origin = (-7.76,-7.15)):
+    def grid_to_world(self, x_grid, y_grid, map_shape, viz = False):
+        return grid_to_world(
+            x_grid, 
+            y_grid, 
+            map_shape,
+            map_resolution=self.map_resolution,
+            map_origin=self.map_origin,
+            viz = viz
+        )
+
+    def world_to_map(self, world_coords, map_resolution, map_shape):
+        return world_to_map(
+            world_coords,
+            resolution=self.map_resolution,
+            map_shape=map_shape,
+            origin=self.map_origin,
+            map_offset = (0, 0) if (self.map_name == 'test1' or self.map_name == 'map3' or self.map_name == 'turtlebot3_map' or self.map_name == 'maze') else (45,15)
+        )
+    def path(self, robot, grid_map, occupation_map, penalty_map):
         # spawn_points = [[2.0, -5.0], [2.0, -2.0]]
-        state_pixel = world_to_map([robot.current_x, robot.current_y + 0.02], 0.05, (-7.76,-7.15), (0,0), grid_map.shape)
+        state_pixel = self.world_to_map([robot.current_x, robot.current_y], 0.05, grid_map.shape)
         goal_world_x, goal_world_y  = robot.goal
-        goal_pixel = world_to_map([goal_world_x, goal_world_y], 0.05, (-7.76,-7.15), (0,0), grid_map.shape)
+        goal_pixel = self.world_to_map([goal_world_x, goal_world_y], 0.05, grid_map.shape)
 
         map_offset = (0, 0)  # Смещение координат
 
@@ -413,17 +486,17 @@ class TurtleBotEnv(Node, gym.Env):
             self.publish_occupation_map(robot)
 
     def get_path(self, opt_path):
-        path = [grid_to_world(i[0], i[1], map_shape = self.grid_map.shape, viz = True) for i in opt_path]
+        path = [self.grid_to_world(i[0], i[1], map_shape = self.grid_map.shape, viz = True) for i in opt_path]
         return path
 
     def get_observations(self, dones):
         observations = []
         for robot in self.robots:
-            x, y = world_to_map(
+            x, y = self.world_to_map(
                 (robot.current_x, robot.current_y),
-                resolution=0.05,
-                origin=(-7.76, -7.15),
-                map_offset=(0, 0),
+                0.05,
+                # origin=(-7.76, -7.15),
+                # map_offset=(0, 0),
                 map_shape=self.grid_map.shape
             )
             other = self.robots[1] if robot.namespace == 'tb0' else self.robots[0]
@@ -472,11 +545,11 @@ class TurtleBotEnv(Node, gym.Env):
             robot.current_x = msg.pose.pose.position.x
             robot.current_y = msg.pose.pose.position.y
             orientation_q = msg.pose.pose.orientation
-            x, y = world_to_map(
+            x, y = self.world_to_map(
                 (robot.current_x, robot.current_y),
-                resolution=0.05,
-                origin=(-7.76, -7.15),
-                map_offset=(0, 0),
+                0.05,
+                # origin=(-7.76, -7.15),
+                # map_offset=(0, 0),
                 map_shape=self.grid_map.shape
             )
             robot.linear_velocity = msg.twist.twist.linear.x
@@ -488,8 +561,8 @@ class TurtleBotEnv(Node, gym.Env):
             height, width = self.grid_map.shape
 
             robot.occupation_map[y][x] += 0.3
-            for dx in range(-6, 7):
-                for dy in range(-6, 7):
+            for dx in range(-4, 5):
+                for dy in range(-4, 5):
                     nx = x + dx
                     ny = y + dy
                     if 0 <= nx < width and 0 <= ny < height:
@@ -509,11 +582,11 @@ class TurtleBotEnv(Node, gym.Env):
             logger.info(f'Min obstacle dist: {min_obstacle_dist}') 
 
             # Конвертация координат
-            current_x, current_y = world_to_map(
+            current_x, current_y = self.world_to_map(
                 (robot.current_x, robot.current_y),
-                resolution=0.05,
-                origin=(-7.76, -7.15),
-                map_offset=(0, 0),
+                0.05,
+                # origin=(-7.76, -7.15),
+                # map_offset=(0, 0),
                 map_shape=self.grid_map.shape
             )
 
@@ -573,7 +646,7 @@ class TurtleBotEnv(Node, gym.Env):
         
     def show_potential_field(self, robot):
 
-        goal_pixel = world_to_map(robot.goal, resolution=0.05, origin=(-7.76, -7.15), map_offset=(0, 0),map_shape=self.grid_map.shape)
+        goal_pixel = self.world_to_map(robot.goal, resolution=0.05, origin=(-7.76, -7.15), map_offset=(0, 0),map_shape=self.grid_map.shape)
         # plt.figure(figsize=(10, 8))
         # plt.imshow(robot.potential_field, cmap='jet')
         # plt.colorbar(label='Potential')
@@ -609,18 +682,18 @@ class TurtleBotEnv(Node, gym.Env):
         angle_diff = robot.state[2]
         min_obstacle_dist = robot.state[3]
         # Преобразуем координаты в пиксельные
-        current_x, current_y = world_to_map(
+        current_x, current_y = self.world_to_map(
             (robot.current_x, robot.current_y),
-            resolution=0.05,
-            origin=(-7.76, -7.15),
-            map_offset=(0, 0),
+            0.05,
+            # origin=(-7.76, -7.15),
+            # map_offset=(0, 0),
             map_shape=self.grid_map.shape
         )
 
-        goal_x, goal_y = world_to_map(robot.goal,
-            resolution=0.05,
-            origin=(-7.76, -7.15),
-            map_offset=(0, 0),
+        goal_x, goal_y = self.world_to_map(robot.goal,
+            0.05,
+            # origin=(-7.76, -7.15),
+            # map_offset=(0, 0),
             map_shape=self.grid_map.shape
         )
         potential_value = robot.potential_field[current_y, current_x] 
@@ -715,7 +788,7 @@ class TurtleBotEnv(Node, gym.Env):
         if current_pos.ndim == 2 and current_pos.shape[0] == 1:
             current_pos = current_pos[0]
 
-        state = world_to_map(current_pos, resolution = 0.05, origin = (-7.76, -7.15),  map_offset = (0, 0), map_shape = self.grid_map.shape)
+        state = self.world_to_map(current_pos, 0.05, map_shape = self.grid_map.shape)
         
         deviation = self.compute_deviation_from_path(robot, state)
         
@@ -731,20 +804,21 @@ class TurtleBotEnv(Node, gym.Env):
         return 0
     
     def step(self, actions):
+        test = True
         EPSILON = 1e-5
         rewards = []
         dones = []
 
         robots_dist = math.sqrt((self.robots[1].current_x - self.robots[0].current_x)**2 + (self.robots[1].current_y - self.robots[0].current_y)**2)
         if (robots_dist <= 0.7 or self.step_ % 50 == 0) and self.step_ % 10 == 0:
-
             for robot in self.robots:
                 # print('Replaning paths for agents')
                 if np.linalg.norm(robot.velocity_vector) < EPSILON:
                     robot.velocity_vector = np.array([EPSILON, 0.0])
                 other = self.robots[1] if robot.namespace == 'tb0' else  self.robots[0]
                 robot.optimal_path = self.interpolate_path(self.path(robot, self.grid_map, other.occupation_map, self.penalty_map))
-                robot.potential_field = generate_potential_field(self.grid_map, world_to_map(robot.goal, 0.05, (-7.76,-7.15), (0, 0), self.grid_map.shape), robot.optimal_path)
+                robot.potential_field = generate_potential_field(self.grid_map, \
+                                                                self.world_to_map(robot.goal, 0.05, self.grid_map.shape), robot.optimal_path)
 
         self.step_ += 1
 
@@ -752,9 +826,11 @@ class TurtleBotEnv(Node, gym.Env):
 
             if robot.optimal_path != []:
                 robot.world_path = [
-                    grid_to_world(p[0], p[1], self.grid_map.shape)
+                    self.grid_to_world(p[0], p[1], self.grid_map.shape)
                     for p in robot.optimal_path
                 ]
+            if self.step_ == 1:
+                robot.init_path = robot.world_path 
 
             cmd_msg = Twist()
             linear = float(np.clip(action[0], 0.05, 0.26))
@@ -817,10 +893,10 @@ class TurtleBotEnv(Node, gym.Env):
 
                 robot.reward -= 3.0 * (0.3 - min_obstacle_dist)
                 # print(f"{robot.namespace} reward после {robot.reward} обнаружения препятствия ОЧЕНЬ БЛИЗКО")
-
-            if abs(robot.current_x - robot.prev_x) < 0.01 and distance > 0.35:
+            if robot.optimal_path != []:
+                if abs(robot.current_x - robot.prev_x) < 0.01 and distance > 0.35:
                 # print(f"{robot.namespace} reward до {robot.reward} (остался в той же точке что и был)")
-                robot.reward -= 20
+                    robot.reward -= 20
                 # print(f"{robot.namespace} reward после {robot.reward} (остался в той же точке что и был)")
 
             if robot.optimal_path == []:
@@ -845,8 +921,8 @@ class TurtleBotEnv(Node, gym.Env):
                 target_idx = min(robot.last_waypoint_idx + self.wp_step, 
                             len(robot.optimal_path)-1)
                 wp = robot.optimal_path[target_idx]
-                robot.nearest_wp = grid_to_world(wp[0],wp[1],self.grid_map.shape)
-                self.visualize_nearest_wp(robot, grid_to_world(wp[0],wp[1],self.grid_map.shape, viz = True))
+                robot.nearest_wp = self.grid_to_world(wp[0],wp[1],self.grid_map.shape)
+                self.visualize_nearest_wp(robot, self.grid_to_world(wp[0],wp[1],self.grid_map.shape, viz = True))
                 # Проверяем достижение любой точки после текущего индекса
                 nearest_reached_idx = np.argmin([
                     np.linalg.norm([
@@ -903,6 +979,42 @@ class TurtleBotEnv(Node, gym.Env):
 
             rewards.append(robot.reward)
             dones.append(robot.done)
+            robot.trajectory.append((robot.current_x, robot.current_y))
+            self.visualize_path(robot, robot.trajectory, traj= True)
+            done = any([robot.done for robot in self.robots])
+            if done and test:
+                plt.figure(figsize=(10, 8))
+                plt.clf()
+                colors = ['blue', 'red', 'navy', 'orange']
+                self.episode_counter += 1
+                for idx, robot in enumerate(self.robots):
+                    x_opt = [p[0] for p in robot.init_path]
+                    y_opt = [p[1] for p in robot.init_path]
+                    plt.plot(x_opt, y_opt, color=colors[idx], 
+                            linewidth=2, alpha=0.7, label=f'Optimal Path {idx+1}')
+                
+                    x_traj = [p[0] for p in robot.trajectory]
+                    y_traj = [p[1] for p in robot.trajectory]
+                    plt.plot(x_traj, y_traj, color=colors[idx+2], 
+                            linewidth=2, alpha=0.7, label=f'Optimal Path {idx+1}')
+                    
+                    plt.scatter(robot.state_pose[0], robot.state_pose[1], 
+                            color=colors[idx], marker='o', s=100, 
+                            edgecolor='black', label=f'Start {idx+1}')
+                    plt.scatter(robot.goal[0], robot.goal[1], 
+                            color=colors[idx], marker='*', s=200,
+                            edgecolor='black', label=f'Goal {idx+1}')
+
+                plt.title(f"Robot Paths (Steps: {self.step_}), map: {self.map_name}")
+                plt.xlabel("X Position")
+                plt.ylabel("Y Position")
+                plt.grid(True)
+                plt.legend(loc='upper right')
+                plt.axis('equal')
+                plt.savefig(os.path.join('paths', f'episode_{self.episode_counter}_map_{self.map_name}.png'))
+                plt.close()
+                
+
         return self.get_observations(dones), rewards, dones, {}
     
     def hausdorff_dist(self, robot):
@@ -927,7 +1039,9 @@ class TurtleBotEnv(Node, gym.Env):
     
     def reset(self):
         states = []
-        spawn_points = [[2.0, -5.0], [2.0, -2.0]]
+        # spawn_points = [[2.0, -5.0], [2.0, -2.0]]
+        spawn_points = self.spawn_points
+
         self.step_ = 0
 
         for i, robot in enumerate(self.robots):
@@ -977,6 +1091,7 @@ class TurtleBotEnv(Node, gym.Env):
                 timeout_counter += 1
 
         for i, robot in enumerate(self.robots):
+            robot.trajectory = [(spawn_points[i][0], spawn_points[i][1])]
             robot.steps = 0
             robot.obstacle_count = 0
             robot.current_x = spawn_points[i][0]
@@ -1008,11 +1123,11 @@ class TurtleBotEnv(Node, gym.Env):
         for _ in range(10):
             rclpy.spin_once(self, timeout_sec=0.1)
         
-        x, y = world_to_map(
+        x, y = self.world_to_map(
             (robot.current_x, robot.current_y),
-            resolution=0.05,
-            origin=(-7.76, -7.15),
-            map_offset=(0, 0),
+            0.05,
+            # origin=(-7.76, -7.15),
+            # map_offset=(0, 0),
             map_shape=self.grid_map.shape
         )
         other = self.robots[1] if robot.namespace == 'tb0' else self.robots[0]
@@ -1026,7 +1141,7 @@ class TurtleBotEnv(Node, gym.Env):
         if robot.optimal_path:
             target_idx = min(robot.last_waypoint_idx + self.wp_step, len(robot.optimal_path)-1)
             wp = robot.optimal_path[target_idx]
-            robot.nearest_wp = grid_to_world(wp[0], wp[1], self.grid_map.shape, viz=True)
+            robot.nearest_wp = self.grid_to_world(wp[0], wp[1], self.grid_map.shape, viz=True)
         else:
             robot.nearest_wp = (robot.target_x, robot.target_y)
         
@@ -1074,7 +1189,7 @@ class TurtleBotEnv(Node, gym.Env):
         wp_marker.color.b = 0.0
         robot.wp_marker_pub.publish(wp_marker)
 
-    def visualize_path(self, robot, path):
+    def visualize_path(self, robot, path, traj = False):
         path_marker = Marker()
         path_marker.header.frame_id = "map"
         path_marker.header.stamp = self.get_clock().now().to_msg()
@@ -1082,7 +1197,7 @@ class TurtleBotEnv(Node, gym.Env):
         path_marker.id = 0
         path_marker.type = Marker.LINE_STRIP
         path_marker.action = Marker.ADD
-        path_marker.scale.x = 0.05 
+        path_marker.scale.x = 0.2 
         path_marker.color.a = 1.0
         if robot.namespace == 'tb0':
             path_marker.color.g = 1.0
@@ -1092,14 +1207,21 @@ class TurtleBotEnv(Node, gym.Env):
             path_marker.color.r = 0.0
         else:
             path_marker.color.r = 1.0
-        path_marker.color.b = 0.0
+        if traj:
+            path_marker.color.b = 1.0
         for (x, y) in path:
             p = Point()
             p.x = float(x)
-            p.y = float(y)
+            if traj:
+                p.y = -float(y)
+            else:
+                p.y = float(y)
             p.z = 0.0
             path_marker.points.append(p)
-        robot.path_marker_pub.publish(path_marker)
+        if traj:
+            robot.traj_marker_pub.publish(path_marker)
+        else:
+            robot.path_marker_pub.publish(path_marker)
 
     def publish_costmaps(self):
         pass
@@ -1110,8 +1232,8 @@ class TurtleBotEnv(Node, gym.Env):
             return
         
         map_a_msg_pose = Pose()
-        map_a_msg_pose.position.x = -7.76
-        map_a_msg_pose.position.y = -7.15
+        map_a_msg_pose.position.x = self.map_origin[0]
+        map_a_msg_pose.position.y = self.map_origin[1]
         map_a_msg_pose.position.z = 0.0
 
         msg = OccupancyGrid(
@@ -1126,8 +1248,8 @@ class TurtleBotEnv(Node, gym.Env):
 
     def publish_occupation_map(self, robot):
         map_a_msg_pose = Pose()
-        map_a_msg_pose.position.x = -7.76
-        map_a_msg_pose.position.y = -7.15
+        map_a_msg_pose.position.x = self.map_origin[0]
+        map_a_msg_pose.position.y = self.map_origin[1]
         map_a_msg_pose.position.z = 0.0
         msg = OccupancyGrid()
         msg.header = Header(stamp=self.get_clock().now().to_msg(), frame_id="map")

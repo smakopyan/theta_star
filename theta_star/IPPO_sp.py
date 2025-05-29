@@ -299,7 +299,7 @@ class PPOAgent:
                 if episode == 0:
                     self.best_model = avg_reward
 
-                elif avg_reward > self.best_model:
+                elif avg_reward > self.best_model and episode_rewards[0] > 0. and episode_rewards[1] > 0.:
                     print(f"prev reward: {self.best_model}, new reward {avg_reward}")
                     self.actor.save(f'ppo_actor_best.keras')
                     print(' ...saving model... ')
