@@ -106,13 +106,13 @@ def generate_launch_description():
     ld.add_action(rviz_node)
 
     # map3
-    # spawn_points = [(2.0, -5.0), (2.0, -2.0)]
+    spawn_points = [(2.0, -5.0), (2.0, -2.0)]
     
     # test1
     # spawn_points = [(-2.3, 0.4), (2.4, 0.4)]
 
     # test
-    spawn_points = [(-0.7, 0.8), (-0.7, -1.5)]
+    # spawn_points = [(-0.7, 0.8), (-0.7, -1.5)]
 
     # maze
     # spawn_points = [(-1.2, 1.1), (0.1, -1.6)]
