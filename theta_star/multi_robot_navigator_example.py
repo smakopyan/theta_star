@@ -72,7 +72,7 @@ def theta_star(start, end, grid, occupations, penalties):
                 continue
             if grid[node_position[0]][node_position[1]] == 1:
                 continue
-            if current_node.parent and line_of_sight(current_node.parent.position, node_position, grid):
+            if current_node.parent and line_of_sight(current_node.parent.position, node_position, grid, occupations):
                 new_g = current_node.parent.g + heuristic(current_node.parent.position, node_position)
                 tentative_node = node(current_node.parent, node_position)
             else:
@@ -83,9 +83,9 @@ def theta_star(start, end, grid, occupations, penalties):
             dynamic_cost = occupations[node_position[1]][node_position[0]]
             penalty = penalties[node_position[1]][node_position[0]]
             new_g += base_cost + 2 * dynamic_cost * penalty
-            if dynamic_cost > 0:
-                print("new_g += base_cost + 2 * dynamic_cost * penalty")
-                print(f"{new_g} += {base_cost} + 2* {dynamic_cost} * {penalty}")
+            # if dynamic_cost > 0:
+            #     print("new_g += base_cost + 2 * dynamic_cost * penalty")
+            #     print(f"{new_g} += {base_cost} + 2* {dynamic_cost} * {penalty}")
 
             if node_position in closed_list:
                 existing_node = closed_list[node_position]
@@ -102,7 +102,7 @@ def theta_star(start, end, grid, occupations, penalties):
 
     return None
 
-def line_of_sight(start, end, grid):
+def line_of_sight(start, end, grid, occupations):
     x0, y0 = start
     x1, y1 = end
     
@@ -118,7 +118,7 @@ def line_of_sight(start, end, grid):
     err = dx - dy
 
     while True:
-        if grid[x0][y0] == 1:
+        if grid[x0][y0] == 1 or occupations[x0][y0]>=0.: 
             return False
             
         if x0 == x1 and y0 == y1:
@@ -233,6 +233,9 @@ class Navigation(Node):
                 f'/{robot.namespace}/lookahead_marker', 
                 10
             )
+
+        # список целей в зависимости от выбранной карты
+
         # # test1.sdf
         self.goals = [(3.99715, -1.6586), (3.50709, 1.44957), (1.25942, 1.25394), (-0.689823, 2.26387), (-2.50234, 2.11622), (-1.7666, 0.285539), (-4.07267, 2.43495)]     
         
@@ -270,6 +273,7 @@ class Navigation(Node):
             x_grid, y_grid = self.world_to_grid(msg.pose.pose.position.x, 
                                                 msg.pose.pose.position.y)
             expansion_size = 5
+            # заполняются карты занятости для каждого агента
             if 0 <= x_grid < self.height and 0 <= y_grid < self.width:
                 other = self.tb0 if robot == self.tb1 else self.tb1
                 other.occupations[y_grid][x_grid] += 1
@@ -294,6 +298,7 @@ class Navigation(Node):
             ]
             self.width = msg.info.width
             self.height = msg.info.height
+            # создается карта с расширенными препятствиями для более точного построения путей
             self.grid = costmap(msg.data, self.width, self.height, self.map_resolution)
             self.grid = np.array(self.grid).reshape(self.height, self.width)
             self.grid = np.where((self.grid == 100) | (self.grid == -1), 1, 0).astype(np.int8)
@@ -304,6 +309,8 @@ class Navigation(Node):
                 robot.occupations = np.zeros((self.height, self.width), dtype=float)
                 robot.penalties = np.ones((self.height, self.width), dtype=float) 
     def timer_callback(self):
+        # в зависимости от выбранной карты реализуется задержка, чтобы роботы не начинали движение до запуска симуляции 
+
         # test1.sdf
         if not self.map_initialized or time.time() - self.map_init_time < 90:
         
@@ -312,7 +319,7 @@ class Navigation(Node):
             print(time.time() - self.map_init_time)
             return
         # for robot in self.robots:
-            # robot.occupations = np.maximum(robot.occupations - 0.07, 0)
+        #     robot.occupations = np.maximum(robot.occupations - 0.05, 0)
 
         for robot in self.robots:
             if robot.goal is None:
@@ -325,6 +332,7 @@ class Navigation(Node):
         if not self.map_initialized:
             return
         if robot.goal == None:
+            # рандомно выбирается любая цель из списка
             self.get_logger().info("Generating new goal..........")
             ind = np.random.randint(0, len(self.goals))
             goal_world = self.goals[ind]
@@ -401,6 +409,7 @@ class Navigation(Node):
         if robot.laser_data:
             v = angle = None
             for i in range(60):
+                # робот поворачивает вправо, если слева препятствие и наоборот 
                 if robot.laser_data[i] < 0.3:
                         v = 0.08
                         angle = -math.pi/4 
@@ -420,7 +429,7 @@ class Navigation(Node):
             self.navigate(robot)
 
         if self.distance_to_goal(robot) < 0.15:
-            self.get_logger().info("The goal reached!!!!!!!!!!!!!!!!!!!!")
+            self.get_logger().info("The goal reached!!!!!!!!")
             robot.goal = None
             robot.path = []
             robot.index = 0
@@ -479,6 +488,7 @@ class Navigation(Node):
         y_world = y_grid * self.map_resolution + self.map_origin[1]
         return (x_world, y_world)
 
+    # визуализация пути
     def visualize_path(self, robot):
         path_marker = Marker()
         path_marker.header.frame_id = "map"
@@ -500,6 +510,7 @@ class Navigation(Node):
             path_marker.points.append(p)
         robot.path_marker_pub.publish(path_marker)
 
+    # визуализация точки следования
     def visualize_lookahead(self, robot, closest_point):
         lookahead_marker = Marker()
         lookahead_marker.header.frame_id = "map"
@@ -520,6 +531,7 @@ class Navigation(Node):
         lookahead_marker.color.b = 0.0
         robot.lookahead_marker_pub.publish(lookahead_marker)
     
+    # визуализация занятых клеток
     def visualize_occupations(self, robot):
         marker = Marker()
         marker.header.frame_id = "map"

@@ -18,6 +18,8 @@ setup(
                                              'maps/map.yaml', 'maps/map.pgm',
                                              "maps/turtlebot3_map.yaml", "maps/turtlebot3_map.pgm"]),
         ('share/' + package_name + '/rviz', ['rviz/multi_robot_view.rviz', 'rviz/single_robot_view.rviz']),
+        ('share/' + package_name + '/urdf', ['urdf/turtlebot3_waffle.urdf','urdf/turtlebot3_burger.urdf']),
+        ('share/' + package_name + '/models', ['models/model.sdf']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

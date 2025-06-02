@@ -11,31 +11,31 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 def generate_launch_description():
     ld = LaunchDescription()
 
-    launch_file_dir = os.path.join(get_package_share_directory('turtlebot3_gazebo'), 'launch')
+    # launch_file_dir = os.path.join(get_package_share_directory('theta_star'), 'launch')
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
 
     TURTLEBOT3_MODEL = 'waffle'
     urdf_file_name = 'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf'
 
     urdf = os.path.join(
-            get_package_share_directory('turtlebot3_gazebo'),
+            get_package_share_directory('theta_star'),
             'urdf',
             'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf')
 
-    turtlebot3_gazebo_path = get_package_share_directory("turtlebot3_gazebo")
+    turtlebot3_gazebo_path = get_package_share_directory("theta_star")
 
-    model = os.path.join(turtlebot3_gazebo_path, "models", "turtlebot3_" + TURTLEBOT3_MODEL ,"model.sdf")
+    model = os.path.join(turtlebot3_gazebo_path, "models", "model.sdf")
     
     declare_world_name = DeclareLaunchArgument(
         'world',
         default_value='test1.sdf',  
-        choices=['world1.sdf', 'world2.sdf', 'world3.sdf', 'world4.sdf', 'turtlebot3_world.world', 'test.sdf', 'test1.sdf']
+        choices=['world1.sdf', 'world2.sdf', 'world3.sdf', 'world4.sdf', 'turtlebot3_world.sdf', 'turtlebot3_world.world', 'test.sdf', 'test1.sdf', 'maze.sdf']
     )
     
     declare_map_name = DeclareLaunchArgument(
         'map',
         default_value='test1.yaml',
-        choices=['map1.yaml', 'map2.yaml', 'map3.yaml', 'map4.yaml', 'turtlebot3_map.yaml', 'map_test.yaml', 'test.yaml', 'test1.yaml']
+        choices=['map1.yaml', 'map2.yaml', 'map3.yaml', 'map4.yaml', 'turtlebot3_map.yaml', 'map_test.yaml', 'test.yaml', 'test1.yaml', 'maze.yaml']
     )
         
     world_path = PathJoinSubstitution([
@@ -53,7 +53,7 @@ def generate_launch_description():
     rviz_config_dir = os.path.join(
         get_package_share_directory('theta_star'),
         'rviz',
-        'multi_robot_view.rviz')
+        'multi_robot_view_train.rviz')
     gzserver_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory("gazebo_ros"), "launch", "gzserver.launch.py")
@@ -105,9 +105,19 @@ def generate_launch_description():
     ld.add_action(map_server_lifecyle)
     ld.add_action(rviz_node)
 
+    # map3
+    # spawn_points = [(2.0, -5.0), (2.0, -2.0)]
+    
+    # test1
+    spawn_points = [(-2.3, 0.4), (2.4, 0.4)]
 
-# test.yaml
-    spawn_points = [(-0.7, 0.05), (4.0, 0.05)]
+    # test
+    # spawn_points = [(-0.7, 0.8), (-0.7, -1.5)]
+
+    # maze
+    # spawn_points = [(-1.2, 1.1), (0.1, -1.6)]
+
+
     last_action = None
     remappings = [("/tf", "tf"), ("/tf_static", "tf_static")]
 
