@@ -16,7 +16,7 @@ def generate_launch_description():
     y_pose = LaunchConfiguration('y_pose', default='-0.5')
 
     world = os.path.join(
-        get_package_share_directory('theta_star'),
+        get_package_share_directory('theta_star_planner'),
         'worlds',
         'world3.sdf'
     )
@@ -59,7 +59,7 @@ def generate_launch_description():
     )
 
     rviz_config_dir = os.path.join(
-        get_package_share_directory('theta_star'),
+        get_package_share_directory('theta_star_planner'),
         'rviz',
         'single_robot_view.rviz')
     

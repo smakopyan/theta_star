@@ -16,7 +16,7 @@ from std_msgs.msg import ColorRGBA
 # lookahead_distance = 0.15
 # speed = 0.1
 
-lookahead_distance = 0.2
+lookahead_distance = 0.25
 speed = 0.1
 expansion_size = 5
 
@@ -368,7 +368,6 @@ class Navigation(Node):
             return
         start = self.world_to_grid(robot.x, robot.y) 
         goal = robot.goal
-        self.update_occupations(robot)
         
         other = self.tb0 if robot == self.tb1 else self.tb1
 
@@ -410,13 +409,13 @@ class Navigation(Node):
             v = angle = None
             for i in range(60):
                 # робот поворачивает вправо, если слева препятствие и наоборот 
-                if robot.laser_data[i] < 0.3:
+                if robot.laser_data[i] < 0.4:
                         v = 0.08
                         angle = -math.pi/4 
                         break
                 if v == None:
                     for i in range(300,360):
-                        if robot.laser_data[i] < 0.3:
+                        if robot.laser_data[i] < 0.4:
                             v = 0.08
                             angle = math.pi/4
                             break
@@ -442,7 +441,6 @@ class Navigation(Node):
 
         if robot.obstacle_detected:
             v *= 0.5
-            lookahead *= 0.5
         for i in range(index, len(path)):
             x = path[i][0]
             y = path[i][1]

@@ -11,18 +11,18 @@ from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 def generate_launch_description():
     ld = LaunchDescription()
 
-    # launch_file_dir = os.path.join(get_package_share_directory('theta_star'), 'launch')
+    # launch_file_dir = os.path.join(get_package_share_directory('theta_star_planner'), 'launch')
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
 
     TURTLEBOT3_MODEL = 'waffle'
     urdf_file_name = 'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf'
 
     urdf = os.path.join(
-            get_package_share_directory('theta_star'),
+            get_package_share_directory('theta_star_planner'),
             'urdf',
             'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf')
 
-    turtlebot3_gazebo_path = get_package_share_directory("theta_star")
+    turtlebot3_gazebo_path = get_package_share_directory("theta_star_planner")
 
     model = os.path.join(turtlebot3_gazebo_path, "models", "model.sdf")
     
@@ -39,19 +39,19 @@ def generate_launch_description():
     )
         
     world_path = PathJoinSubstitution([
-        get_package_share_directory('theta_star'),  
+        get_package_share_directory('theta_star_planner'),  
         'worlds',
         LaunchConfiguration('world')  
     ])
     
     map_path = PathJoinSubstitution([
-        get_package_share_directory('theta_star'),
+        get_package_share_directory('theta_star_planner'),
         'maps',
         LaunchConfiguration('map')
     ])
 
     rviz_config_dir = os.path.join(
-        get_package_share_directory('theta_star'),
+        get_package_share_directory('theta_star_planner'),
         'rviz',
         'multi_robot_view_train.rviz')
     gzserver_cmd = IncludeLaunchDescription(

@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'theta_star'
+package_name = 'theta_star_planner'
 
 setup(
     name=package_name,
@@ -30,8 +30,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [ 
-            'navigate = theta_star.multi_robot_navigator_example:main',
-            'one_robot = theta_star.single_robot_navigator:main'
+            'navigate = theta_star_planner.multi_robot_navigator_example:main',
+            'one_robot = theta_star_planner.single_robot_navigator:main'
         ],
     },
 )

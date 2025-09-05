@@ -11,11 +11,11 @@ from launch_ros.actions import Node
 def generate_launch_description():
     TURTLEBOT3_MODEL = 'waffle'
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-    turtlebot3_gazebo_path = get_package_share_directory("theta_star")
+    turtlebot3_gazebo_path = get_package_share_directory("theta_star_planner")
 
     model = os.path.join(turtlebot3_gazebo_path, "models", "model.sdf")
     urdf = os.path.join(
-            get_package_share_directory('theta_star'),
+            get_package_share_directory('theta_star_planner'),
             'urdf',
             'turtlebot3_' + TURTLEBOT3_MODEL + '.urdf')
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
@@ -23,7 +23,7 @@ def generate_launch_description():
     y_pose = LaunchConfiguration('y_pose', default='0.0')
 
     world = os.path.join(
-        get_package_share_directory('theta_star'),
+        get_package_share_directory('theta_star_planner'),
         'worlds',
         'maze.sdf'
     )
